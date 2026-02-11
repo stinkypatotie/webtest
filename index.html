@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Remote Camera Control</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 30px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .mode-selector {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .mode-btn {
+            padding: 12px 30px;
+            font-size: 16px;
+            border: 2px solid #667eea;
+            border-radius: 50px;
+            cursor: pointer;
+            background: white;
+            color: #667eea;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .mode-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .mode-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .mode-section {
+            display: none;
+        }
+
+        .mode-section.active {
+            display: block;
+        }
+
+        .session-info {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .session-id {
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+            letter-spacing: 8px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            border: 2px dashed #667eea;
+        }
+
+        .session-label {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .copy-btn {
+            margin-top: 10px;
+            padding: 10px 25px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .copy-btn:hover {
+            background: #5568d3;
+        }
+
+        .connection-status {
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        .connection-status.connected {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .connection-status.disconnected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .connection-status.waiting {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .camera-section {
+            position: relative;
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        #video {
+            width: 100%;
+            display: block;
+            max-height: 500px;
+        }
+
+        #canvas {
+            display: none;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 15px 30px;
+            font-size: 16px;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        button:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            background: #ccc !important;
+            cursor: not-allowed;
+            transform: none;
+            opacity: 0.6;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #f093fb;
+            color: white;
+        }
+
+        .btn-info {
+            background: #4facfe;
+            color: white;
+        }
+
+        .btn-success {
+            background: #43e97b;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #fa709a;
+            color: white;
+        }
+
+        .remote-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .remote-controls button {
+            width: 100%;
+        }
+
+        .session-input {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .session-input input {
+            flex: 1;
+            padding: 15px;
+            font-size: 24px;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            text-align: center;
+            letter-spacing: 8px;
+            font-family: 'Courier New', monospace;
+            text-transform: uppercase;
+        }
+
+        .session-input input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .photos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .photo-item {
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .photo-item img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .photo-actions {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .photo-item:hover .photo-actions {
+            opacity: 1;
+        }
+
+        .photo-actions button {
+            padding: 8px 16px;
+            font-size: 12px;
+        }
+
+        .status {
+            text-align: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            color: #666;
+        }
+
+        .status.error {
+            background: #fee;
+            color: #c33;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .command-log {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            margin-bottom: 20px;
+        }
+
+        .command-log-item {
+            padding: 5px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .command-log-item:last-child {
+            border-bottom: none;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            .session-id {
+                font-size: 24px;
+                letter-spacing: 4px;
+            }
+
+            button {
+                padding: 12px 24px;
+                font-size: 14px;
+            }
+
+            .photos-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+
+            .photo-item img {
+                height: 150px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📸 Remote Camera Control</h1>
+        <div class="subtitle">Simple peer-to-peer camera control</div>
+        
+        <div class="mode-selector">
+            <button class="mode-btn active" onclick="switchMode('camera')">📷 Camera Mode</button>
+            <button class="mode-btn" onclick="switchMode('remote')">🎮 Remote Mode</button>
+        </div>
+
+        <!-- Camera Mode -->
+        <div id="cameraMode" class="mode-section active">
+            <div class="session-info">
+                <div class="session-label">Your Camera ID</div>
+                <div class="session-id" id="cameraSessionId">----</div>
+                <button class="copy-btn" onclick="copySessionId()">📋 Copy ID</button>
+                <div class="session-label" style="margin-top: 10px;">Share this ID with the remote controller</div>
+                <div class="connection-status waiting" id="cameraStatus">Waiting for remote...</div>
+            </div>
+
+            <div id="cameraStatusMsg" class="status">
+                Click "Start Camera" to begin
+            </div>
+
+            <div class="camera-section">
+                <video id="video" autoplay playsinline></video>
+                <canvas id="canvas"></canvas>
+            </div>
+
+            <div class="controls">
+                <button id="startBtn" class="btn-primary">Start Camera</button>
+                <button id="switchBtn" class="btn-info" disabled>Switch Camera</button>
+                <button id="captureBtn" class="btn-secondary" disabled>Capture Photo</button>
+            </div>
+
+            <div id="commandLog" class="command-log" style="display: none;">
+                <strong>Remote Command Log:</strong>
+                <div id="commandLogContent"></div>
+            </div>
+
+            <div id="cameraPhotos" class="photos-grid"></div>
+        </div>
+
+        <!-- Remote Mode -->
+        <div id="remoteMode" class="mode-section">
+            <div class="session-input">
+                <input type="text" id="sessionIdInput" placeholder="Enter 4-digit ID" maxlength="4">
+                <button onclick="connectToCamera()" class="btn-primary">Connect</button>
+            </div>
+
+            <div class="session-info" style="display: none;" id="remoteSessionInfo">
+                <div class="session-label">Connected to Camera</div>
+                <div class="session-id" id="remoteSessionId">----</div>
+                <div class="connection-status connected" id="remoteStatus">Connected</div>
+            </div>
+
+            <div id="remoteStatusMsg" class="status">
+                Enter the 4-digit Camera ID to control it remotely
+            </div>
+
+            <div class="remote-controls" id="remoteControls" style="display: none;">
+                <button onclick="sendCommand('start')" class="btn-primary">▶ Start Camera</button>
+                <button onclick="sendCommand('stop')" class="btn-danger">⏹ Stop Camera</button>
+                <button onclick="sendCommand('switch')" class="btn-info">🔄 Switch Camera</button>
+                <button onclick="sendCommand('capture')" class="btn-secondary">📸 Capture Photo</button>
+            </div>
+
+            <div id="remotePhotos" class="photos-grid"></div>
+        </div>
+    </div>
+
+    <script>
+        // Simple LocalStorage-based communication for same-device demo
+        // For real cross-device use, you'll need to set up Firebase or similar
+        
+        // Camera Mode Variables
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const startBtn = document.getElementById('startBtn');
+        const captureBtn = document.getElementById('captureBtn');
+        const switchBtn = document.getElementById('switchBtn');
+        
+        let stream = null;
+        let currentFacingMode = 'user';
+        let photos = [];
+        let sessionId = null;
+        let commandCheckInterval = null;
+
+        // Remote Mode Variables
+        let connectedSessionId = null;
+        let photoCheckInterval = null;
+
+        // Generate random 4-digit session ID
+        function generateSessionId() {
+            return Math.floor(1000 + Math.random() * 9000).toString();
+        }
+
+        // Initialize camera session
+        function initializeCameraSession() {
+            sessionId = generateSessionId();
+            document.getElementById('cameraSessionId').textContent = sessionId;
+            
+            // Store session data
+            const sessionData = {
+                id: sessionId,
+                active: true,
+                timestamp: Date.now(),
+                command: null,
+                commandTimestamp: null
+            };
+            
+            localStorage.setItem(`camera_session_${sessionId}`, JSON.stringify(sessionData));
+            updateCameraStatus('Ready - waiting for remote controller');
+            
+            // Start checking for commands
+            startCommandPolling();
+        }
+
+        // Poll for remote commands
+        function startCommandPolling() {
+            if (commandCheckInterval) clearInterval(commandCheckInterval);
+            
+            commandCheckInterval = setInterval(() => {
+                if (!sessionId) return;
+                
+                const data = localStorage.getItem(`camera_session_${sessionId}`);
+                if (data) {
+                    const sessionData = JSON.parse(data);
+                    
+                    if (sessionData.command && sessionData.commandTimestamp) {
+                        // Check if this is a new command (not processed yet)
+                        const lastProcessed = localStorage.getItem(`last_processed_${sessionId}`);
+                        
+                        if (!lastProcessed || parseInt(lastProcessed) < sessionData.commandTimestamp) {
+                            logCommand(`Received: ${sessionData.command}`);
+                            executeCommand(sessionData.command);
+                            
+                            // Mark as processed
+                            localStorage.setItem(`last_processed_${sessionId}`, sessionData.commandTimestamp.toString());
+                            
+                            // Update connection status
+                            document.getElementById('cameraStatus').className = 'connection-status connected';
+                            document.getElementById('cameraStatus').textContent = 'Remote Connected';
+                        }
+                    }
+                }
+            }, 500);
+        }
+
+        // Execute remote command
+        function executeCommand(command) {
+            document.getElementById('commandLog').style.display = 'block';
+            
+            switch(command) {
+                case 'start':
+                    if (!stream) startCamera();
+                    break;
+                case 'stop':
+                    if (stream) stopCamera();
+                    break;
+                case 'switch':
+                    if (stream) switchCamera();
+                    break;
+                case 'capture':
+                    if (stream) capturePhoto();
+                    break;
+            }
+        }
+
+        // Log command
+        function logCommand(message) {
+            const logContent = document.getElementById('commandLogContent');
+            const logItem = document.createElement('div');
+            logItem.className = 'command-log-item';
+            logItem.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
+            logContent.insertBefore(logItem, logContent.firstChild);
+            
+            // Keep only last 10 items
+            while (logContent.children.length > 10) {
+                logContent.removeChild(logContent.lastChild);
+            }
+        }
+
+        // Copy session ID
+        function copySessionId() {
+            const sessionId = document.getElementById('cameraSessionId').textContent;
+            navigator.clipboard.writeText(sessionId).then(() => {
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.textContent = '✓ Copied!';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                }, 2000);
+            }).catch(() => {
+                // Fallback for older browsers
+                alert('Session ID: ' + sessionId);
+            });
+        }
+
+        // Camera functions
+        async function startCamera() {
+            try {
+                if (stream) {
+                    stream.getTracks().forEach(track => track.stop());
+                }
+
+                const constraints = {
+                    video: {
+                        facingMode: currentFacingMode,
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 }
+                    },
+                    audio: false
+                };
+
+                stream = await navigator.mediaDevices.getUserMedia(constraints);
+                video.srcObject = stream;
+                
+                captureBtn.disabled = false;
+                switchBtn.disabled = false;
+                startBtn.textContent = 'Stop Camera';
+                updateCameraStatus('Camera active and ready', false);
+
+            } catch (error) {
+                console.error('Error accessing camera:', error);
+                updateCameraStatus('Error: Could not access camera. Please grant permissions.', true);
+            }
+        }
+
+        function stopCamera() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                video.srcObject = null;
+                stream = null;
+                captureBtn.disabled = true;
+                switchBtn.disabled = true;
+                startBtn.textContent = 'Start Camera';
+                updateCameraStatus('Camera stopped');
+            }
+        }
+
+        function switchCamera() {
+            currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
+            startCamera();
+            updateCameraStatus('Switching camera...');
+        }
+
+        function capturePhoto() {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            
+            const context = canvas.getContext('2d');
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            const imageData = canvas.toDataURL('image/jpeg', 0.8);
+            const photoId = Date.now();
+            photos.push({ id: photoId, data: imageData });
+            
+            // Store photo for remote access
+            localStorage.setItem(`photo_${sessionId}_${photoId}`, imageData);
+            
+            displayCameraPhotos();
+            updateCameraStatus(`Photo captured! Total: ${photos.length}`, false);
+        }
+
+        function displayCameraPhotos() {
+            const photosDiv = document.getElementById('cameraPhotos');
+            photosDiv.innerHTML = '';
+            
+            photos.forEach((photo, index) => {
+                const photoItem = document.createElement('div');
+                photoItem.className = 'photo-item';
+                
+                photoItem.innerHTML = `
+                    <img src="${photo.data}" alt="Captured photo ${index + 1}">
+                    <div class="photo-actions">
+                        <button class="btn-success" onclick="downloadPhoto(${index})">Download</button>
+                        <button class="btn-danger" onclick="deletePhoto(${index})">Delete</button>
+                    </div>
+                `;
+                
+                photosDiv.appendChild(photoItem);
+            });
+        }
+
+        function downloadPhoto(index) {
+            const link = document.createElement('a');
+            link.download = `photo_${Date.now()}.jpg`;
+            link.href = photos[index].data;
+            link.click();
+        }
+
+        function deletePhoto(index) {
+            const photoId = photos[index].id;
+            localStorage.removeItem(`photo_${sessionId}_${photoId}`);
+            photos.splice(index, 1);
+            displayCameraPhotos();
+            updateCameraStatus(`Photo deleted. Total: ${photos.length}`);
+        }
+
+        function updateCameraStatus(message, isError = false) {
+            const statusDiv = document.getElementById('cameraStatusMsg');
+            statusDiv.textContent = message;
+            statusDiv.className = isError ? 'status error' : 'status success';
+        }
+
+        // Remote Control Functions
+        function connectToCamera() {
+            const input = document.getElementById('sessionIdInput');
+            const sid = input.value.trim();
+            
+            if (sid.length !== 4) {
+                updateRemoteStatus('Please enter a valid 4-digit ID', true);
+                return;
+            }
+            
+            // Check if session exists
+            const sessionData = localStorage.getItem(`camera_session_${sid}`);
+            
+            if (!sessionData) {
+                updateRemoteStatus('Camera not found. Make sure Camera Mode is running with this ID.', true);
+                return;
+            }
+            
+            connectedSessionId = sid;
+            document.getElementById('remoteSessionId').textContent = sid;
+            document.getElementById('remoteSessionInfo').style.display = 'block';
+            document.getElementById('remoteControls').style.display = 'grid';
+            updateRemoteStatus('Connected! You can now control the camera.', false);
+            
+            // Start polling for photos
+            startPhotoPolling();
+        }
+
+        function sendCommand(command) {
+            if (!connectedSessionId) return;
+            
+            const sessionData = localStorage.getItem(`camera_session_${connectedSessionId}`);
+            if (sessionData) {
+                const data = JSON.parse(sessionData);
+                data.command = command;
+                data.commandTimestamp = Date.now();
+                
+                localStorage.setItem(`camera_session_${connectedSessionId}`, JSON.stringify(data));
+                updateRemoteStatus(`Command sent: ${command}`, false);
+            }
+        }
+
+        function startPhotoPolling() {
+            if (photoCheckInterval) clearInterval(photoCheckInterval);
+            
+            photoCheckInterval = setInterval(() => {
+                if (!connectedSessionId) return;
+                displayRemotePhotos();
+            }, 1000);
+        }
+
+        function displayRemotePhotos() {
+            const photosDiv = document.getElementById('remotePhotos');
+            photosDiv.innerHTML = '';
+            
+            // Get all photos for this session
+            const photoKeys = Object.keys(localStorage).filter(key => 
+                key.startsWith(`photo_${connectedSessionId}_`)
+            );
+            
+            photoKeys.forEach(key => {
+                const imageData = localStorage.getItem(key);
+                if (imageData) {
+                    const photoItem = document.createElement('div');
+                    photoItem.className = 'photo-item';
+                    
+                    photoItem.innerHTML = `
+                        <img src="${imageData}" alt="Remote photo">
+                        <div class="photo-actions">
+                            <button class="btn-success" onclick="downloadRemotePhoto('${imageData}')">Download</button>
+                        </div>
+                    `;
+                    
+                    photosDiv.appendChild(photoItem);
+                }
+            });
+        }
+
+        function downloadRemotePhoto(imageData) {
+            const link = document.createElement('a');
+            link.download = `remote_photo_${Date.now()}.jpg`;
+            link.href = imageData;
+            link.click();
+        }
+
+        function updateRemoteStatus(message, isError = false) {
+            const statusDiv = document.getElementById('remoteStatusMsg');
+            statusDiv.textContent = message;
+            statusDiv.className = isError ? 'status error' : 'status success';
+        }
+
+        // Mode switching
+        function switchMode(mode) {
+            document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.mode-section').forEach(section => section.classList.remove('active'));
+            
+            if (mode === 'camera') {
+                document.querySelector('.mode-btn:first-child').classList.add('active');
+                document.getElementById('cameraMode').classList.add('active');
+            } else {
+                document.querySelector('.mode-btn:last-child').classList.add('active');
+                document.getElementById('remoteMode').classList.add('active');
+            }
+        }
+
+        // Event listeners
+        startBtn.addEventListener('click', () => {
+            if (stream) {
+                stopCamera();
+            } else {
+                startCamera();
+            }
+        });
+
+        captureBtn.addEventListener('click', capturePhoto);
+        switchBtn.addEventListener('click', switchCamera);
+
+        // Initialize on load
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            updateCameraStatus('Error: Camera API not supported', true);
+            startBtn.disabled = true;
+        } else {
+            initializeCameraSession();
+        }
+
+        // Cleanup on unload
+        window.addEventListener('beforeunload', () => {
+            if (commandCheckInterval) clearInterval(commandCheckInterval);
+            if (photoCheckInterval) clearInterval(photoCheckInterval);
+        });
+    </script>
+</body>
+</html>

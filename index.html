@@ -1464,9 +1464,19 @@
                             <div class="form-group"><label>Bot Token</label><input type="text" id="telegram-token" value="${tg.botToken}" placeholder="123456789:ABC..." autocomplete="off" autocorrect="off"></div>
                             <div class="form-group"><label>Chat ID</label><input type="text" id="telegram-chatid" value="${tg.chatId}" placeholder="123456789" inputmode="numeric"></div>
                         </div>
-                        <div style="display:grid;gap:8px;margin-bottom:14px;">
-                            ${['clockIn:🟢 Clock In','clockOut:🔴 Clock Out','newDeduction:💸 New Deduction'].map(x=>{const[k,label]=x.split(':');return`<label style="display:flex;align-items:center;gap:10px;padding:12px;background:var(--surface-2);border-radius:var(--radius-sm);cursor:pointer;"><input type="checkbox" id="notif-${k.toLowerCase().replace('n','')}" ${tg.notifications[k]?'checked':''} style="width:20px;height:20px;flex-shrink:0;"><span>${label}</span></label>`;}).join('')}
-                            <label style="display:flex;align-items:center;gap:10px;padding:12px;background:var(--surface-2);border-radius:var(--radius-sm);cursor:pointer;"><input type="checkbox" id="notif-clockin" ${tg.notifications.clockIn?'checked':''} style="width:20px;height:20px;flex-shrink:0;" hidden><span></span></label>
+                                                <div style="display:grid;gap:8px;margin-bottom:14px;">
+                            <label style="display:flex;align-items:center;gap:10px;padding:12px;background:var(--surface-2);border-radius:var(--radius-sm);cursor:pointer;">
+                                <input type="checkbox" id="notif-clockin" ${tg.notifications.clockIn?'checked':''} style="width:20px;height:20px;flex-shrink:0;">
+                                <span>🟢 Clock In notifications</span>
+                            </label>
+                            <label style="display:flex;align-items:center;gap:10px;padding:12px;background:var(--surface-2);border-radius:var(--radius-sm);cursor:pointer;">
+                                <input type="checkbox" id="notif-clockout" ${tg.notifications.clockOut?'checked':''} style="width:20px;height:20px;flex-shrink:0;">
+                                <span>🔴 Clock Out notifications</span>
+                            </label>
+                            <label style="display:flex;align-items:center;gap:10px;padding:12px;background:var(--surface-2);border-radius:var(--radius-sm);cursor:pointer;">
+                                <input type="checkbox" id="notif-deduction" ${tg.notifications.newDeduction?'checked':''} style="width:20px;height:20px;flex-shrink:0;">
+                                <span>💸 New Deduction notifications</span>
+                            </label>
                         </div>
                         <div style="display:flex;gap:10px;flex-wrap:wrap;">
                             <button class="btn-primary btn-sm" onclick="saveTelegramSettings()">💾 Save</button>

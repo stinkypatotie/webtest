@@ -2,810 +2,1591 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Remote Camera Control</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+    <title>Sir Ramos DTR</title>
+
+    <!-- PWA / iPhone Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Ramos DTR">
+    <meta name="theme-color" content="#1a2332">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="description" content="Sir Ramos Drugstore DTR & Payroll App">
+
+    <!-- Home Screen Icon (data URI inline SVG) -->
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='38' fill='%231a2332'/%3E%3Ctext x='90' y='118' text-anchor='middle' font-size='90' font-family='system-ui'%3E🏪%3C/text%3E%3C/svg%3E">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='28' font-size='28'%3E🏪%3C/text%3E%3C/svg%3E">
+
+    <!-- Web App Manifest (inline data URI) -->
+    <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22Sir%20Ramos%20Drugstore%20DTR%22%2C%22short_name%22%3A%22Ramos%20DTR%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%231a2332%22%2C%22theme_color%22%3A%22%221a2332%22%2C%22orientation%22%3A%22portrait%22%7D">
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        /* ═══════════════════════════════════════════════
+           DESIGN TOKENS & RESET
+        ═══════════════════════════════════════════════ */
+        :root {
+            --navy:       #1a2332;
+            --navy-mid:   #243041;
+            --navy-light: #2e3d52;
+            --blue:       #3b82f6;
+            --blue-dark:  #2563eb;
+            --green:      #22c55e;
+            --green-dark: #16a34a;
+            --amber:      #f59e0b;
+            --red:        #ef4444;
+            --red-dark:   #dc2626;
+            --purple:     #a855f7;
+            --surface:    #ffffff;
+            --surface-2:  #f8fafc;
+            --surface-3:  #f1f5f9;
+            --border:     #e2e8f0;
+            --text-1:     #0f172a;
+            --text-2:     #475569;
+            --text-3:     #94a3b8;
+            --radius-sm:  8px;
+            --radius:     12px;
+            --radius-lg:  18px;
+            --radius-xl:  24px;
+            --shadow-sm:  0 1px 3px rgba(0,0,0,.08);
+            --shadow:     0 4px 16px rgba(0,0,0,.10);
+            --shadow-lg:  0 12px 40px rgba(0,0,0,.16);
+            /* iPhone safe areas */
+            --safe-top:    env(safe-area-inset-top, 0px);
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
+            --safe-left:   env(safe-area-inset-left, 0px);
+            --safe-right:  env(safe-area-inset-right, 0px);
+            /* Bottom nav height + safe area */
+            --nav-h: calc(62px + var(--safe-bottom));
         }
 
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        html { height: 100%; -webkit-text-size-adjust: 100%; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+            background: var(--surface-2);
+            min-height: 100%;
+            padding-top: var(--safe-top);
+            -webkit-font-smoothing: antialiased;
         }
-
-        .container {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            padding: 30px;
-            max-width: 900px;
-            margin: 0 auto;
-        }
-
-        h1 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 10px;
-            font-size: 28px;
-        }
-
-        .subtitle {
-            text-align: center;
-            color: #666;
-            margin-bottom: 30px;
-            font-size: 14px;
-        }
-
-        .mode-selector {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            margin-bottom: 30px;
-        }
-
-        .mode-btn {
-            padding: 12px 30px;
-            font-size: 16px;
-            border: 2px solid #667eea;
-            border-radius: 50px;
-            cursor: pointer;
-            background: white;
-            color: #667eea;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-
-        .mode-btn.active {
-            background: #667eea;
-            color: white;
-        }
-
-        .mode-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
-        }
-
-        .mode-section {
-            display: none;
-        }
-
-        .mode-section.active {
-            display: block;
-        }
-
-        .session-info {
-            background: #f8f9fa;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        .session-id {
-            font-size: 32px;
-            font-weight: bold;
-            color: #667eea;
-            letter-spacing: 8px;
-            margin: 10px 0;
-            font-family: 'Courier New', monospace;
-            padding: 15px;
-            background: white;
-            border-radius: 8px;
-            border: 2px dashed #667eea;
-        }
-
-        .session-label {
-            color: #666;
-            font-size: 14px;
-            margin-bottom: 5px;
-        }
-
-        .copy-btn {
-            margin-top: 10px;
-            padding: 10px 25px;
-            background: #667eea;
-            color: white;
-            border: none;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-        }
-
-        .copy-btn:hover {
-            background: #5568d3;
-        }
-
-        .connection-status {
-            display: inline-block;
-            padding: 8px 20px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: 600;
-            margin-top: 10px;
-        }
-
-        .connection-status.connected {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .connection-status.disconnected {
-            background: #f8d7da;
-            color: #721c24;
-        }
-
-        .connection-status.waiting {
-            background: #fff3cd;
-            color: #856404;
-        }
-
-        .camera-section {
-            position: relative;
-            background: #000;
-            border-radius: 12px;
-            overflow: hidden;
-            margin-bottom: 20px;
-        }
-
-        #video {
+        input, select, textarea, button { font-family: inherit; }
+        input, select, textarea {
+            padding: 12px 14px;
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 16px; /* prevents iOS zoom */
+            background: var(--surface);
+            color: var(--text-1);
             width: 100%;
-            display: block;
-            max-height: 500px;
-        }
-
-        #canvas {
-            display: none;
-        }
-
-        .controls {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            flex-wrap: wrap;
-            margin-bottom: 20px;
-        }
-
-        button {
-            padding: 15px 30px;
-            font-size: 16px;
-            border: none;
-            border-radius: 50px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        button:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-        }
-
-        button:active:not(:disabled) {
-            transform: translateY(0);
-        }
-
-        button:disabled {
-            background: #ccc !important;
-            cursor: not-allowed;
-            transform: none;
-            opacity: 0.6;
-        }
-
-        .btn-primary {
-            background: #667eea;
-            color: white;
-        }
-
-        .btn-secondary {
-            background: #f093fb;
-            color: white;
-        }
-
-        .btn-info {
-            background: #4facfe;
-            color: white;
-        }
-
-        .btn-success {
-            background: #43e97b;
-            color: white;
-        }
-
-        .btn-danger {
-            background: #fa709a;
-            color: white;
-        }
-
-        .remote-controls {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        .remote-controls button {
-            width: 100%;
-        }
-
-        .session-input {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .session-input input {
-            flex: 1;
-            padding: 15px;
-            font-size: 24px;
-            border: 2px solid #ddd;
-            border-radius: 12px;
-            text-align: center;
-            letter-spacing: 8px;
-            font-family: 'Courier New', monospace;
-            text-transform: uppercase;
-        }
-
-        .session-input input:focus {
             outline: none;
-            border-color: #667eea;
+            transition: border-color .15s;
+            -webkit-appearance: none;
         }
+        input:focus, select:focus, textarea:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(59,130,246,.15); }
+        select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2394a3b8' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 38px; }
+        textarea { resize: vertical; min-height: 100px; }
+        button { padding: 13px 20px; border: none; border-radius: var(--radius-sm); cursor: pointer; font-size: 15px; font-weight: 600; transition: all .15s; -webkit-appearance: none; }
+        button:active { transform: scale(.97); opacity: .9; }
 
-        .photos-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
-        }
-
-        .photo-item {
-            position: relative;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-
-        .photo-item img {
-            width: 100%;
-            height: 200px;
-            object-fit: cover;
-            display: block;
-        }
-
-        .photo-actions {
-            position: absolute;
-            bottom: 0;
+        /* ═══════════════════════════════════════════════
+           DESKTOP SIDEBAR
+        ═══════════════════════════════════════════════ */
+        .sidebar {
+            width: 240px;
+            background: var(--navy);
+            color: white;
+            padding: 20px 0;
+            position: fixed;
+            height: 100vh;
+            top: 0;
             left: 0;
-            right: 0;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 10px;
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .photo-item:hover .photo-actions {
-            opacity: 1;
-        }
-
-        .photo-actions button {
-            padding: 8px 16px;
-            font-size: 12px;
-        }
-
-        .status {
-            text-align: center;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            color: #666;
-        }
-
-        .status.error {
-            background: #fee;
-            color: #c33;
-        }
-
-        .status.success {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .command-log {
-            background: #f8f9fa;
-            border-radius: 8px;
-            padding: 15px;
-            max-height: 200px;
             overflow-y: auto;
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+        }
+        .sidebar-header { padding: 16px 20px 20px; border-bottom: 1px solid rgba(255,255,255,.08); margin-bottom: 12px; }
+        .sidebar-header h1 { font-size: 17px; color: white; margin-bottom: 3px; font-weight: 700; }
+        .sidebar-header .subtitle { font-size: 11px; color: var(--text-3); letter-spacing: .5px; text-transform: uppercase; }
+        .sidebar-menu { list-style: none; flex: 1; padding: 0 10px; }
+        .sidebar-menu li { margin-bottom: 2px; }
+        .sidebar-menu a { display: flex; align-items: center; padding: 11px 14px; color: rgba(255,255,255,.75); text-decoration: none; border-radius: var(--radius-sm); transition: all .15s; gap: 12px; font-size: 14px; font-weight: 500; }
+        .sidebar-menu a:hover { background: rgba(255,255,255,.08); color: white; }
+        .sidebar-menu a.active { background: var(--blue); color: white; font-weight: 600; }
+        .sidebar-menu a .icon { font-size: 17px; width: 22px; text-align: center; flex-shrink: 0; }
+        .sidebar-footer { padding: 16px 20px; border-top: 1px solid rgba(255,255,255,.08); margin-top: 8px; }
+        .admin-badge-sidebar { background: var(--red); color: white; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; display: inline-block; margin-bottom: 10px; letter-spacing: .5px; }
+        .admin-status-sidebar { font-size: 12px; color: var(--text-3); }
+        .sidebar-btn { color: white; padding: 10px 14px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; cursor: pointer; border: none; width: 100%; margin-top: 8px; text-align: left; }
+        .sidebar-btn.logout { background: rgba(239,68,68,.2); color: #fca5a5; }
+        .sidebar-btn.login  { background: rgba(59,130,246,.25); color: #93c5fd; }
+
+        /* ═══════════════════════════════════════════════
+           MOBILE BOTTOM NAV
+        ═══════════════════════════════════════════════ */
+        .bottom-nav {
+            display: none;
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            height: var(--nav-h);
+            background: var(--navy);
+            border-top: 1px solid rgba(255,255,255,.06);
+            z-index: 200;
+            padding-bottom: var(--safe-bottom);
+            overflow-x: auto;
+            overflow-y: hidden;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+        .bottom-nav::-webkit-scrollbar { display: none; }
+        .bottom-nav-inner {
+            display: flex;
+            align-items: stretch;
+            height: 62px;
+            min-width: max-content;
+            padding: 0 4px;
+        }
+        .bottom-nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 6px 14px;
+            color: rgba(255,255,255,.45);
+            text-decoration: none;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 10px;
+            font-weight: 600;
+            gap: 3px;
+            min-width: 60px;
+            letter-spacing: .2px;
+            border-radius: var(--radius-sm);
+            transition: color .15s;
+            white-space: nowrap;
+        }
+        .bottom-nav-item:active { background: rgba(255,255,255,.06); }
+        .bottom-nav-item.active { color: var(--blue); }
+        .bottom-nav-item .nav-icon { font-size: 20px; line-height: 1; }
+        .bottom-nav-item.active .nav-icon { transform: scale(1.08); }
+
+        /* Bottom sheet (More menu) */
+        .sheet-overlay {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,.5);
+            z-index: 300;
+            display: none;
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+        }
+        .sheet-overlay.open { display: block; }
+        .bottom-sheet {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            background: var(--surface);
+            border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+            z-index: 301;
+            padding-bottom: calc(16px + var(--safe-bottom));
+            transform: translateY(100%);
+            transition: transform .3s cubic-bezier(.34,1.56,.64,1);
+        }
+        .sheet-overlay.open .bottom-sheet { transform: translateY(0); }
+        .sheet-handle { width: 36px; height: 4px; background: var(--border); border-radius: 2px; margin: 12px auto 20px; }
+        .sheet-title { text-align: center; font-weight: 700; font-size: 15px; color: var(--text-2); padding-bottom: 12px; border-bottom: 1px solid var(--border); margin: 0 20px; }
+        .sheet-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; padding: 16px 12px 0; }
+        .sheet-item {
+            display: flex; flex-direction: column; align-items: center;
+            padding: 14px 8px; border-radius: var(--radius); gap: 8px;
+            cursor: pointer; border: none; background: var(--surface-2);
+            font-size: 12px; font-weight: 600; color: var(--text-1); transition: background .15s;
+        }
+        .sheet-item:active { background: var(--surface-3); }
+        .sheet-item .sheet-icon { font-size: 26px; line-height: 1; }
+
+        /* ═══════════════════════════════════════════════
+           MAIN CONTENT
+        ═══════════════════════════════════════════════ */
+        .main-wrapper {
+            margin-left: 240px;
+            padding: 24px;
+            min-height: 100vh;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+
+        /* ═══════════════════════════════════════════════
+           CARDS & SECTIONS
+        ═══════════════════════════════════════════════ */
+        .card {
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border);
+            margin-bottom: 16px;
+        }
+        .page-title {
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--text-1);
             margin-bottom: 20px;
+            padding-bottom: 14px;
+            border-bottom: 2px solid var(--blue);
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
-
-        .command-log-item {
-            padding: 5px;
-            border-bottom: 1px solid #ddd;
+        .section-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-1);
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin-bottom: 16px; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        label { font-size: 13px; font-weight: 600; color: var(--text-2); }
 
-        .command-log-item:last-child {
-            border-bottom: none;
+        /* ═══════════════════════════════════════════════
+           BUTTONS
+        ═══════════════════════════════════════════════ */
+        .btn-primary  { background: var(--green);      color: white; }
+        .btn-primary:hover  { background: var(--green-dark); }
+        .btn-warning  { background: var(--amber);      color: white; }
+        .btn-danger   { background: var(--red);        color: white; }
+        .btn-danger:hover   { background: var(--red-dark); }
+        .btn-info     { background: var(--blue);       color: white; }
+        .btn-info:hover     { background: var(--blue-dark); }
+        .btn-muted    { background: var(--surface-3);  color: var(--text-2); border: 1.5px solid var(--border); }
+        .btn-sm { padding: 8px 14px; font-size: 13px; border-radius: var(--radius-sm); }
+        .btn-edit  { background: var(--purple); color: white; }
+        .btn-save  { background: var(--green);  color: white; }
+        .btn-cancel{ background: var(--text-3); color: white; }
+        .action-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+
+        /* ═══════════════════════════════════════════════
+           ALERTS & STATUS
+        ═══════════════════════════════════════════════ */
+        .alert { padding: 14px 16px; border-radius: var(--radius-sm); margin-bottom: 16px; border-left: 4px solid; font-size: 14px; }
+        .alert-green  { background: #f0fdf4; border-color: var(--green);  color: #166534; }
+        .alert-blue   { background: #eff6ff; border-color: var(--blue);   color: #1e40af; }
+        .alert-amber  { background: #fffbeb; border-color: var(--amber);  color: #92400e; }
+        .alert-red    { background: #fef2f2; border-color: var(--red);    color: #991b1b; }
+        .msg { padding: 12px 16px; border-radius: var(--radius-sm); margin-top: 12px; font-size: 14px; font-weight: 500; }
+        .msg.ok  { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+        .msg.err { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+
+        /* ═══════════════════════════════════════════════
+           CLOCK PAGE SPECIFIC
+        ═══════════════════════════════════════════════ */
+        .clock-hero {
+            background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
+            border-radius: var(--radius-lg);
+            padding: 28px 24px;
+            color: white;
+            margin-bottom: 16px;
+            position: relative;
+            overflow: hidden;
         }
+        .clock-hero::before {
+            content: '';
+            position: absolute;
+            top: -40px; right: -40px;
+            width: 160px; height: 160px;
+            background: rgba(59,130,246,.12);
+            border-radius: 50%;
+        }
+        .clock-hero .date-line { font-size: 13px; color: rgba(255,255,255,.55); margin-bottom: 4px; font-weight: 500; letter-spacing: .4px; }
+        .clock-hero .time-display { font-size: 40px; font-weight: 800; letter-spacing: -1px; margin-bottom: 2px; font-variant-numeric: tabular-nums; }
+        .clock-hero .day-name { font-size: 15px; color: rgba(255,255,255,.7); font-weight: 600; }
+        .clock-btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 4px; }
+        .clock-action-btn {
+            padding: 18px 12px;
+            border-radius: var(--radius);
+            font-size: 15px;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            transition: all .15s;
+            -webkit-appearance: none;
+        }
+        .clock-action-btn .btn-emoji { font-size: 26px; }
+        .clock-action-btn.in  { background: var(--green); color: white; }
+        .clock-action-btn.out { background: var(--amber); color: white; }
+        .clock-action-btn:active { transform: scale(.96); }
 
+        /* ═══════════════════════════════════════════════
+           TABLE
+        ═══════════════════════════════════════════════ */
+        .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin-top: 16px; border-radius: var(--radius); border: 1px solid var(--border); }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 500px; }
+        th { background: var(--navy); color: white; padding: 12px 10px; text-align: left; font-size: 11px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; }
+        td { padding: 11px 10px; border-bottom: 1px solid var(--border); color: var(--text-1); vertical-align: middle; }
+        tr:last-child td { border-bottom: none; }
+        tr:nth-child(even) td { background: var(--surface-2); }
+        .undertime-row td { background: #fffbeb !important; }
+        .undertime-badge { background: var(--amber); color: white; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+
+        /* ═══════════════════════════════════════════════
+           STAFF ITEM
+        ═══════════════════════════════════════════════ */
+        .staff-item { background: var(--surface-2); padding: 16px; border-radius: var(--radius); margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border); gap: 12px; }
+        .staff-name { font-weight: 700; font-size: 15px; color: var(--text-1); }
+        .staff-meta { font-size: 13px; color: var(--text-2); margin-top: 2px; }
+
+        /* ═══════════════════════════════════════════════
+           DEDUCTIONS
+        ═══════════════════════════════════════════════ */
+        .deduction-item td { background: #fffbeb !important; }
+
+        /* ═══════════════════════════════════════════════
+           MODAL
+        ═══════════════════════════════════════════════ */
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,.5); display: flex; align-items: flex-end; justify-content: center; z-index: 500; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+        .modal-content {
+            background: var(--surface);
+            border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+            padding: 28px 24px calc(28px + var(--safe-bottom));
+            width: 100%;
+            max-width: 480px;
+            box-shadow: var(--shadow-lg);
+            animation: slideUp .3s cubic-bezier(.34,1.56,.64,1);
+        }
+        @keyframes slideUp { from { transform: translateY(60px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .modal-drag { width: 36px; height: 4px; background: var(--border); border-radius: 2px; margin: -8px auto 20px; }
+        .modal-title { font-size: 18px; font-weight: 800; color: var(--text-1); margin-bottom: 8px; }
+
+        /* ═══════════════════════════════════════════════
+           CLOCK-OUT CHECKLIST MODAL
+        ═══════════════════════════════════════════════ */
+        .clockout-modal-content {
+            background: var(--surface);
+            border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+            width: 100%;
+            max-width: 480px;
+            overflow: hidden;
+            animation: slideUp .3s cubic-bezier(.34,1.56,.64,1);
+            padding-bottom: var(--safe-bottom);
+        }
+        .clockout-header {
+            background: linear-gradient(135deg, var(--navy) 0%, #2e4a7a 100%);
+            padding: 24px 24px 20px;
+            text-align: center;
+            color: white;
+        }
+        .clockout-header .store-name { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; opacity: .6; margin-bottom: 6px; }
+        .clockout-header h2 { font-size: 20px; font-weight: 800; color: white; border: none; padding: 0; margin: 0; }
+        .clockout-body { padding: 20px 20px 4px; }
+        .checklist-items { list-style: none; margin: 0 0 16px; padding: 0; }
+        .checklist-items li { display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; border-radius: var(--radius-sm); margin-bottom: 8px; background: var(--surface-2); border-left: 3px solid var(--blue); font-size: 14px; color: var(--text-1); line-height: 1.4; }
+        .checklist-items li .check-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+        .clockout-farewell { text-align: center; padding: 14px; background: #f0fdf4; border-radius: var(--radius-sm); font-size: 14px; color: var(--green-dark); font-weight: 700; }
+        .clockout-footer { padding: 16px 20px 20px; display: flex; gap: 10px; }
+        .clockout-footer button { flex: 1; padding: 15px; font-size: 14px; font-weight: 700; border-radius: var(--radius); }
+
+        /* ═══════════════════════════════════════════════
+           ADMIN BADGE
+        ═══════════════════════════════════════════════ */
+        .badge { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; letter-spacing: .4px; }
+        .badge-red    { background: #fee2e2; color: var(--red-dark); }
+        .badge-green  { background: #dcfce7; color: var(--green-dark); }
+        .badge-blue   { background: #dbeafe; color: var(--blue-dark); }
+        .badge-amber  { background: #fef3c7; color: #92400e; }
+
+        /* ═══════════════════════════════════════════════
+           INSTALL BANNER (mobile only)
+        ═══════════════════════════════════════════════ */
+        .install-banner {
+            display: none;
+            background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
+            color: white;
+            padding: 14px 16px;
+            border-radius: var(--radius);
+            margin-bottom: 14px;
+            align-items: center;
+            gap: 12px;
+            font-size: 13px;
+        }
+        .install-banner .install-icon { font-size: 28px; flex-shrink: 0; }
+        .install-banner strong { font-size: 14px; display: block; margin-bottom: 2px; }
+        .install-banner .close-banner { background: none; border: none; color: rgba(255,255,255,.6); font-size: 20px; padding: 0; margin-left: auto; cursor: pointer; }
+
+        /* ═══════════════════════════════════════════════
+           TODAY ACTIVITY CARDS (mobile-friendly alternative)
+        ═══════════════════════════════════════════════ */
+        .activity-card { background: var(--surface-2); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 8px; border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .activity-card .name { font-weight: 700; font-size: 14px; color: var(--text-1); }
+        .activity-card .times { font-size: 12px; color: var(--text-2); margin-top: 2px; }
+        .activity-card .hours-badge { font-weight: 800; font-size: 18px; color: var(--navy); }
+        .activity-card.undertime { border-left: 3px solid var(--amber); }
+        .activity-card.complete  { border-left: 3px solid var(--green); }
+        .activity-card.ongoing   { border-left: 3px solid var(--blue); }
+
+        /* ═══════════════════════════════════════════════
+           EDIT INPUT
+        ═══════════════════════════════════════════════ */
+        .edit-input { padding: 6px 10px; border: 1.5px solid var(--blue); border-radius: var(--radius-sm); font-size: 13px; width: 90px; }
+
+        /* ═══════════════════════════════════════════════
+           PAYROLL TABLE
+        ═══════════════════════════════════════════════ */
+        .payroll-card { background: var(--surface-2); border-radius: var(--radius); padding: 16px; margin-bottom: 10px; border: 1px solid var(--border); }
+        .payroll-name { font-weight: 700; font-size: 15px; color: var(--text-1); margin-bottom: 10px; }
+        .payroll-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+        .payroll-line { font-size: 13px; color: var(--text-2); }
+        .payroll-line span { font-weight: 700; color: var(--text-1); }
+        .payroll-net { font-size: 22px; font-weight: 800; color: var(--navy); }
+        .payroll-deduct { color: var(--red); font-weight: 700; }
+
+        /* ═══════════════════════════════════════════════
+           RESPONSIVE: MOBILE
+        ═══════════════════════════════════════════════ */
         @media (max-width: 768px) {
-            .container {
-                padding: 20px;
-            }
+            .sidebar { display: none; }
+            .bottom-nav { display: block; }
+            .main-wrapper { margin-left: 0; padding: 16px 14px; padding-bottom: calc(var(--nav-h) + 16px); }
+            .form-grid { grid-template-columns: 1fr; }
+            .card { padding: 18px; border-radius: var(--radius); }
+            .page-title { font-size: 19px; }
+            th, td { padding: 10px 8px; }
+            table { font-size: 12px; }
+        }
 
-            h1 {
-                font-size: 24px;
-            }
-
-            .session-id {
-                font-size: 24px;
-                letter-spacing: 4px;
-            }
-
-            button {
-                padding: 12px 24px;
-                font-size: 14px;
-            }
-
-            .photos-grid {
-                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            }
-
-            .photo-item img {
-                height: 150px;
-            }
+        /* ═══════════════════════════════════════════════
+           PRINT
+        ═══════════════════════════════════════════════ */
+        @media print {
+            .sidebar, .bottom-nav, .no-print { display: none !important; }
+            .main-wrapper { margin-left: 0; padding: 0; }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>📸 Remote Camera Control</h1>
-        <div class="subtitle">Simple peer-to-peer camera control</div>
-        
-        <div class="mode-selector">
-            <button class="mode-btn active" onclick="switchMode('camera')">📷 Camera Mode</button>
-            <button class="mode-btn" onclick="switchMode('remote')">🎮 Remote Mode</button>
+
+    <!-- ─── DESKTOP SIDEBAR ───────────────────────────────────── -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h1>🏪 Sir Ramos Drugstore</h1>
+            <div class="subtitle">DTR & Payroll App</div>
         </div>
-
-        <!-- Camera Mode -->
-        <div id="cameraMode" class="mode-section active">
-            <div class="session-info">
-                <div class="session-label">Your Camera ID</div>
-                <div class="session-id" id="cameraSessionId">----</div>
-                <button class="copy-btn" onclick="copySessionId()">📋 Copy ID</button>
-                <div class="session-label" style="margin-top: 10px;">Share this ID with the remote controller</div>
-                <div class="connection-status waiting" id="cameraStatus">Waiting for remote...</div>
-            </div>
-
-            <div id="cameraStatusMsg" class="status">
-                Click "Start Camera" to begin
-            </div>
-
-            <div class="camera-section">
-                <video id="video" autoplay playsinline></video>
-                <canvas id="canvas"></canvas>
-            </div>
-
-            <div class="controls">
-                <button id="startBtn" class="btn-primary">Start Camera</button>
-                <button id="switchBtn" class="btn-info" disabled>Switch Camera</button>
-                <button id="captureBtn" class="btn-secondary" disabled>Capture Photo</button>
-            </div>
-
-            <div id="commandLog" class="command-log" style="display: none;">
-                <strong>Remote Command Log:</strong>
-                <div id="commandLogContent"></div>
-            </div>
-
-            <div id="cameraPhotos" class="photos-grid"></div>
+        <ul class="sidebar-menu" id="sidebar-menu"></ul>
+        <div class="sidebar-footer">
+            <div id="admin-status-sidebar"></div>
         </div>
+    </div>
 
-        <!-- Remote Mode -->
-        <div id="remoteMode" class="mode-section">
-            <div class="session-input">
-                <input type="text" id="sessionIdInput" placeholder="Enter 4-digit ID" maxlength="4">
-                <button onclick="connectToCamera()" class="btn-primary">Connect</button>
+    <!-- ─── MOBILE BOTTOM NAV ─────────────────────────────────── -->
+    <nav class="bottom-nav" id="bottom-nav">
+        <div class="bottom-nav-inner" id="bottom-nav-inner"></div>
+    </nav>
+
+    <!-- ─── MORE SHEET ────────────────────────────────────────── -->
+    <div class="sheet-overlay" id="sheet-overlay" onclick="closeSheet()">
+        <div class="bottom-sheet" onclick="event.stopPropagation()">
+            <div class="sheet-handle"></div>
+            <div class="sheet-title">More Options</div>
+            <div class="sheet-grid" id="sheet-grid"></div>
+        </div>
+    </div>
+
+    <!-- ─── MAIN CONTENT ─────────────────────────────────────── -->
+    <div class="main-wrapper">
+        <div class="container">
+            <div id="view"></div>
+        </div>
+    </div>
+
+    <!-- ─── AUTH MODAL ───────────────────────────────────────── -->
+    <div id="auth-modal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <div class="modal-drag"></div>
+            <div class="modal-title">🔒 Admin Access</div>
+            <p style="color:var(--text-2);font-size:14px;margin-bottom:18px;">Enter admin password to continue</p>
+            <div class="form-group" style="margin-bottom:12px;">
+                <input type="password" id="admin-password" placeholder="Password" autocomplete="current-password">
             </div>
-
-            <div class="session-info" style="display: none;" id="remoteSessionInfo">
-                <div class="session-label">Connected to Camera</div>
-                <div class="session-id" id="remoteSessionId">----</div>
-                <div class="connection-status connected" id="remoteStatus">Connected</div>
+            <div id="auth-error" style="color:var(--red);font-size:14px;margin-bottom:12px;"></div>
+            <div style="display:flex;gap:10px;">
+                <button class="btn-primary" onclick="verifyPassword()" style="flex:1;">Login</button>
+                <button class="btn-muted" onclick="closeAuthModal()">Cancel</button>
             </div>
+        </div>
+    </div>
 
-            <div id="remoteStatusMsg" class="status">
-                Enter the 4-digit Camera ID to control it remotely
+    <!-- ─── EDIT EMPLOYEE MODAL ──────────────────────────────── -->
+    <div id="edit-modal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <div class="modal-drag"></div>
+            <div class="modal-title">✏️ Edit Employee</div>
+            <div class="form-group" style="margin-bottom:12px;"><label>Full Name</label><input type="text" id="edit-name"></div>
+            <div class="form-group" style="margin-bottom:12px;"><label>Position</label><select id="edit-position"><option value="regular">Regular Staff</option><option value="senior">Senior Staff</option><option value="trainee">Trainee</option></select></div>
+            <div class="form-group" style="margin-bottom:16px;"><label>PIN Code</label><input type="password" id="edit-pin" maxlength="4" inputmode="numeric"></div>
+            <div id="edit-msg" class="msg" style="display:none;"></div>
+            <div style="display:flex;gap:10px;margin-top:16px;">
+                <button class="btn-primary" onclick="saveEmployeeUpdate()" style="flex:1;">Save Changes</button>
+                <button class="btn-muted" onclick="closeEditModal()">Cancel</button>
             </div>
+        </div>
+    </div>
 
-            <div class="remote-controls" id="remoteControls" style="display: none;">
-                <button onclick="sendCommand('start')" class="btn-primary">▶ Start Camera</button>
-                <button onclick="sendCommand('stop')" class="btn-danger">⏹ Stop Camera</button>
-                <button onclick="sendCommand('switch')" class="btn-info">🔄 Switch Camera</button>
-                <button onclick="sendCommand('capture')" class="btn-secondary">📸 Capture Photo</button>
+    <!-- ─── CLOCK-OUT CHECKLIST MODAL ───────────────────────── -->
+    <div id="clockout-modal" class="modal" style="display:none;">
+        <div class="clockout-modal-content">
+            <div class="clockout-header">
+                <div class="store-name">Sir Ramos Drugstore</div>
+                <h2>🌙 Before You Leave</h2>
             </div>
-
-            <div id="remotePhotos" class="photos-grid"></div>
+            <div class="clockout-body">
+                <ul class="checklist-items" id="clockout-checklist-display"></ul>
+                <div class="clockout-farewell" id="clockout-farewell-display"></div>
+            </div>
+            <div class="clockout-footer">
+                <button style="background:var(--surface-3);color:var(--text-2);" onclick="closeClockoutModal()">✕ Cancel</button>
+                <button class="btn-primary" onclick="confirmClockOut()">✅ Clock Out</button>
+            </div>
         </div>
     </div>
 
     <script>
-        // Simple LocalStorage-based communication for same-device demo
-        // For real cross-device use, you'll need to set up Firebase or similar
-        
-        // Camera Mode Variables
-        const video = document.getElementById('video');
-        const canvas = document.getElementById('canvas');
-        const startBtn = document.getElementById('startBtn');
-        const captureBtn = document.getElementById('captureBtn');
-        const switchBtn = document.getElementById('switchBtn');
-        
-        let stream = null;
-        let currentFacingMode = 'user';
-        let photos = [];
-        let sessionId = null;
-        let commandCheckInterval = null;
+        // ═══════════════════════════════════════════════
+        // FIREBASE CONFIG
+        // ═══════════════════════════════════════════════
+        const firebaseConfig = {
+            apiKey: "AIzaSyDbeMGD1rdPMoikNh7gqGmHYxzJ3kolBdE",
+            authDomain: "sirramosds-dtrapp.firebaseapp.com",
+            databaseURL: "https://sirramosds-dtrapp-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "sirramosds-dtrapp",
+            storageBucket: "sirramosds-dtrapp.firebasestorage.app",
+            messagingSenderId: "770196503286",
+            appId: "1:770196503286:web:755d13625ba6cb0c8f4ad7",
+            measurementId: "G-R86M2S6BGY"
+        };
 
-        // Remote Mode Variables
-        let connectedSessionId = null;
-        let photoCheckInterval = null;
+        let db = null, isFirebaseInitialized = false;
+        let currentEditingStaffId = null, pendingClockOut = null;
 
-        // Generate random 4-digit session ID
-        function generateSessionId() {
-            return Math.floor(1000 + Math.random() * 9000).toString();
+        try {
+            firebase.initializeApp(firebaseConfig);
+            db = firebase.database();
+            isFirebaseInitialized = true;
+        } catch(e) { console.error('Firebase init failed:', e); }
+
+        // ═══════════════════════════════════════════════
+        // DEVICE ID
+        // ═══════════════════════════════════════════════
+        function getDeviceId() {
+            let id = localStorage.getItem('deviceId');
+            if (!id) { id = 'device-' + Math.random().toString(36).substr(2,9); localStorage.setItem('deviceId', id); }
+            return id;
+        }
+        const deviceId = getDeviceId();
+        let authorizedDevices = [];
+
+        // ═══════════════════════════════════════════════
+        // APP STATE & CONSTANTS
+        // ═══════════════════════════════════════════════
+        const DEFAULT_CLOCKOUT_CHECKLIST = [
+            "Charge POS if needed (Main Store)",
+            "Turn off the printer and money detector",
+            "Turn off all lights",
+            "Doors properly locked"
+        ];
+        const DEFAULT_CLOCKOUT_FAREWELL = "Thank you and good night!";
+
+        const app = {
+            staff: [], records: [], deductions: [],
+            settings: {
+                adminPassword: 'admin123',
+                fullShiftHours: 9.5,
+                clockOutChecklist: DEFAULT_CLOCKOUT_CHECKLIST,
+                clockOutFarewell: DEFAULT_CLOCKOUT_FAREWELL,
+                telegram: { enabled: false, botToken: '', chatId: '', notifications: { clockIn: true, clockOut: true, newDeduction: true, payrollGenerated: false } }
+            },
+            start: '', end: '', view: 'clock', editingRecord: null, adminMode: false
+        };
+
+        const RATES = { regular: { daily: 650, ot: 68 }, senior: { daily: 700, ot: 73 }, trainee: { daily: 500, ot: 53 } };
+        function getHourlyRate(pos) { return RATES[pos].daily / 12; }
+        function roundUp(v) { return Math.ceil(v); }
+
+        // ═══════════════════════════════════════════════
+        // TABS CONFIG
+        // ═══════════════════════════════════════════════
+        const TABS = [
+            { id: 'clock',     label: 'Clock',     icon: '🕐', admin: false },
+            { id: 'view',      label: 'DTR',       icon: '📋', admin: true  },
+            { id: 'payroll',   label: 'Payroll',   icon: '💰', admin: true  },
+            { id: 'deductions',label: 'Deductions',icon: '💸', admin: true  },
+            { id: 'staff',     label: 'Staff',     icon: '👥', admin: true  },
+            { id: 'export',    label: 'Export',    icon: '📊', admin: true  },
+            { id: 'devices',   label: 'Devices',   icon: '🔐', admin: true  },
+            { id: 'firebase',  label: 'Firebase',  icon: '🔥', admin: true  },
+            { id: 'settings',  label: 'Settings',  icon: '⚙️', admin: true  }
+        ];
+
+        // ═══════════════════════════════════════════════
+        // DATA PERSISTENCE
+        // ═══════════════════════════════════════════════
+        function saveData() {
+            const data = { staff: app.staff, records: app.records, deductions: app.deductions, settings: app.settings };
+            if (isFirebaseInitialized) {
+                db.ref().set(data).then(() => {
+                    ['staff','records','deductions','settings'].forEach(k => localStorage.setItem(k, JSON.stringify(app[k])));
+                }).catch(() => {
+                    ['staff','records','deductions','settings'].forEach(k => localStorage.setItem(k, JSON.stringify(app[k])));
+                });
+            } else {
+                ['staff','records','deductions','settings'].forEach(k => localStorage.setItem(k, JSON.stringify(app[k])));
+            }
         }
 
-        // Initialize camera session
-        function initializeCameraSession() {
-            sessionId = generateSessionId();
-            document.getElementById('cameraSessionId').textContent = sessionId;
-            
-            // Store session data
-            const sessionData = {
-                id: sessionId,
-                active: true,
-                timestamp: Date.now(),
-                command: null,
-                commandTimestamp: null
-            };
-            
-            localStorage.setItem(`camera_session_${sessionId}`, JSON.stringify(sessionData));
-            updateCameraStatus('Ready - waiting for remote controller');
-            
-            // Start checking for commands
-            startCommandPolling();
-        }
-
-        // Poll for remote commands
-        function startCommandPolling() {
-            if (commandCheckInterval) clearInterval(commandCheckInterval);
-            
-            commandCheckInterval = setInterval(() => {
-                if (!sessionId) return;
-                
-                const data = localStorage.getItem(`camera_session_${sessionId}`);
-                if (data) {
-                    const sessionData = JSON.parse(data);
-                    
-                    if (sessionData.command && sessionData.commandTimestamp) {
-                        // Check if this is a new command (not processed yet)
-                        const lastProcessed = localStorage.getItem(`last_processed_${sessionId}`);
-                        
-                        if (!lastProcessed || parseInt(lastProcessed) < sessionData.commandTimestamp) {
-                            logCommand(`Received: ${sessionData.command}`);
-                            executeCommand(sessionData.command);
-                            
-                            // Mark as processed
-                            localStorage.setItem(`last_processed_${sessionId}`, sessionData.commandTimestamp.toString());
-                            
-                            // Update connection status
-                            document.getElementById('cameraStatus').className = 'connection-status connected';
-                            document.getElementById('cameraStatus').textContent = 'Remote Connected';
+        function loadData() {
+            if (isFirebaseInitialized) {
+                db.ref().once('value').then(snap => {
+                    const data = snap.val();
+                    if (data) {
+                        app.staff = data.staff || [];
+                        app.records = data.records || [];
+                        app.deductions = data.deductions || [];
+                        if (data.settings) {
+                            app.settings = { ...app.settings, ...data.settings, fullShiftHours: data.settings.fullShiftHours || 9.5, clockOutChecklist: data.settings.clockOutChecklist || DEFAULT_CLOCKOUT_CHECKLIST, clockOutFarewell: data.settings.clockOutFarewell || DEFAULT_CLOCKOUT_FAREWELL };
                         }
+                    } else loadFromLocalStorage();
+                    render();
+                }).catch(() => { loadFromLocalStorage(); render(); });
+            } else { loadFromLocalStorage(); }
+        }
+
+        function loadFromLocalStorage() {
+            app.staff = JSON.parse(localStorage.getItem('staff')) || [];
+            app.records = JSON.parse(localStorage.getItem('records')) || [];
+            app.deductions = JSON.parse(localStorage.getItem('deductions')) || [];
+            const s = JSON.parse(localStorage.getItem('settings'));
+            if (s) app.settings = { ...app.settings, ...s, fullShiftHours: s.fullShiftHours || 9.5, clockOutChecklist: s.clockOutChecklist || DEFAULT_CLOCKOUT_CHECKLIST, clockOutFarewell: s.clockOutFarewell || DEFAULT_CLOCKOUT_FAREWELL };
+        }
+
+        function loadAuthorizedDevices() {
+            if (isFirebaseInitialized) {
+                db.ref('devices').once('value').then(snap => {
+                    const data = snap.val();
+                    if (data) {
+                        authorizedDevices = Array.isArray(data) ? data : Object.values(data);
+                        localStorage.setItem('authorizedDevices', JSON.stringify(authorizedDevices));
+                    } else {
+                        const local = JSON.parse(localStorage.getItem('authorizedDevices'));
+                        if (local && local.length > 0) { authorizedDevices = local; db.ref('devices').set(authorizedDevices); }
+                        else authorizedDevices = [];
                     }
+                    updateDeviceActivity();
+                }).catch(() => {
+                    authorizedDevices = JSON.parse(localStorage.getItem('authorizedDevices')) || [];
+                    updateDeviceActivity();
+                });
+            } else {
+                authorizedDevices = JSON.parse(localStorage.getItem('authorizedDevices')) || [];
+                updateDeviceActivity();
+            }
+        }
+
+        function saveAuthorizedDevices() {
+            if (isFirebaseInitialized) {
+                if (authorizedDevices.length === 0) {
+                    db.ref('devices').once('value').then(snap => {
+                        const ex = snap.val();
+                        if (ex && ex.length > 0) { authorizedDevices = ex; localStorage.setItem('authorizedDevices', JSON.stringify(authorizedDevices)); render(); return; }
+                        db.ref('devices').set(authorizedDevices).then(() => localStorage.setItem('authorizedDevices', JSON.stringify(authorizedDevices)));
+                    });
+                } else {
+                    db.ref('devices').set(authorizedDevices).then(() => localStorage.setItem('authorizedDevices', JSON.stringify(authorizedDevices))).catch(() => localStorage.setItem('authorizedDevices', JSON.stringify(authorizedDevices)));
                 }
-            }, 500);
+            } else localStorage.setItem('authorizedDevices', JSON.stringify(authorizedDevices));
         }
 
-        // Execute remote command
-        function executeCommand(command) {
-            document.getElementById('commandLog').style.display = 'block';
-            
-            switch(command) {
-                case 'start':
-                    if (!stream) startCamera();
-                    break;
-                case 'stop':
-                    if (stream) stopCamera();
-                    break;
-                case 'switch':
-                    if (stream) switchCamera();
-                    break;
-                case 'capture':
-                    if (stream) capturePhoto();
-                    break;
+        function updateDeviceActivity() {
+            const d = authorizedDevices.find(x => x.id === deviceId);
+            if (d) { d.lastActive = new Date().toISOString(); saveAuthorizedDevices(); }
+        }
+
+        // ═══════════════════════════════════════════════
+        // NAV RENDERING
+        // ═══════════════════════════════════════════════
+        function nav(view, closeSheetFirst) {
+            if (closeSheetFirst) closeSheet();
+            app.view = view;
+            render();
+            window.scrollTo(0, 0);
+        }
+
+        const BOTTOM_NAV_MAIN = ['clock','view','payroll','deductions','staff'];
+
+        function render() {
+            const visible = TABS.filter(t => !t.admin || app.adminMode);
+
+            // Desktop sidebar
+            document.getElementById('sidebar-menu').innerHTML = visible.map(t =>
+                `<li><a href="#" class="${app.view===t.id?'active':''}" onclick="nav('${t.id}');return false;"><span class="icon">${t.icon}</span><span>${t.label}</span></a></li>`
+            ).join('');
+
+            // Mobile bottom nav
+            const mainVisible = visible.filter(t => BOTTOM_NAV_MAIN.includes(t.id));
+            const moreVisible  = visible.filter(t => !BOTTOM_NAV_MAIN.includes(t.id));
+            let navHTML = mainVisible.map(t =>
+                `<button class="bottom-nav-item ${app.view===t.id?'active':''}" onclick="nav('${t.id}')">
+                    <span class="nav-icon">${t.icon}</span><span>${t.label}</span>
+                </button>`
+            ).join('');
+            if (moreVisible.length > 0) {
+                navHTML += `<button class="bottom-nav-item" onclick="openSheet()"><span class="nav-icon">⋯</span><span>More</span></button>`;
+                document.getElementById('sheet-grid').innerHTML = moreVisible.map(t =>
+                    `<button class="sheet-item" onclick="nav('${t.id}',true)"><span class="sheet-icon">${t.icon}</span><span>${t.label}</span></button>`
+                ).join('');
+            }
+            document.getElementById('bottom-nav-inner').innerHTML = navHTML;
+
+            // Admin status sidebar
+            updateAdminStatus();
+
+            // Page content
+            const views = { clock: renderClock, view: renderView, payroll: renderPayroll, deductions: renderDeductions, staff: renderStaff, export: renderExport, devices: renderDevices, firebase: renderFirebase, settings: renderSettings };
+            document.getElementById('view').innerHTML = views[app.view] ? views[app.view]() : '';
+        }
+
+        function openSheet()  { document.getElementById('sheet-overlay').classList.add('open'); }
+        function closeSheet() { document.getElementById('sheet-overlay').classList.remove('open'); }
+
+        function updateAdminStatus() {
+            const el = document.getElementById('admin-status-sidebar');
+            if (app.adminMode) {
+                el.innerHTML = `<div class="admin-badge-sidebar">👤 ADMIN MODE</div><div class="admin-status-sidebar" style="margin-bottom:8px;">Session active</div><button class="sidebar-btn logout" onclick="exitAdminMode()">🚪 Exit Admin Mode</button>`;
+            } else {
+                el.innerHTML = `<div class="admin-status-sidebar" style="margin-bottom:8px;">Logged out</div><button class="sidebar-btn login" onclick="showAdminLogin()">🔐 Admin Login</button>`;
             }
         }
 
-        // Log command
-        function logCommand(message) {
-            const logContent = document.getElementById('commandLogContent');
-            const logItem = document.createElement('div');
-            logItem.className = 'command-log-item';
-            logItem.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
-            logContent.insertBefore(logItem, logContent.firstChild);
-            
-            // Keep only last 10 items
-            while (logContent.children.length > 10) {
-                logContent.removeChild(logContent.lastChild);
-            }
+        // ═══════════════════════════════════════════════
+        // AUTH
+        // ═══════════════════════════════════════════════
+        function showAdminLogin() {
+            document.getElementById('auth-modal').style.display = 'flex';
+            document.getElementById('auth-error').textContent = '';
+            setTimeout(() => { const p=document.getElementById('admin-password'); if(p){p.value='';p.focus();} }, 150);
+        }
+        function closeAuthModal() { document.getElementById('auth-modal').style.display='none'; document.getElementById('admin-password').value=''; document.getElementById('auth-error').textContent=''; }
+        function verifyPassword() {
+            const pw = document.getElementById('admin-password').value, err = document.getElementById('auth-error');
+            if (pw === app.settings.adminPassword) { app.adminMode=true; closeAuthModal(); render(); }
+            else if (pw) err.textContent = '❌ Incorrect password.';
+            else err.textContent = '⚠️ Please enter a password.';
+        }
+        function exitAdminMode() {
+            app.adminMode = false;
+            const cur = TABS.find(t => t.id===app.view);
+            if (cur && cur.admin) app.view = 'clock';
+            render();
         }
 
-        // Copy session ID
-        function copySessionId() {
-            const sessionId = document.getElementById('cameraSessionId').textContent;
-            navigator.clipboard.writeText(sessionId).then(() => {
-                const btn = event.target;
-                const originalText = btn.textContent;
-                btn.textContent = '✓ Copied!';
-                setTimeout(() => {
-                    btn.textContent = originalText;
-                }, 2000);
-            }).catch(() => {
-                // Fallback for older browsers
-                alert('Session ID: ' + sessionId);
-            });
+        // ═══════════════════════════════════════════════
+        // EDIT EMPLOYEE MODAL
+        // ═══════════════════════════════════════════════
+        function openEditModal(staffId) {
+            const s = app.staff.find(x => x.id===staffId); if(!s) return;
+            currentEditingStaffId = staffId;
+            document.getElementById('edit-name').value = s.name;
+            document.getElementById('edit-position').value = s.position;
+            document.getElementById('edit-pin').value = s.pin;
+            document.getElementById('edit-modal').style.display = 'flex';
+        }
+        function closeEditModal() { document.getElementById('edit-modal').style.display='none'; currentEditingStaffId=null; document.getElementById('edit-msg').style.display='none'; }
+        function saveEmployeeUpdate() {
+            if (!currentEditingStaffId) return;
+            const name=document.getElementById('edit-name').value.trim(), position=document.getElementById('edit-position').value, pin=document.getElementById('edit-pin').value.trim();
+            if (!name||!pin) { showMsg('edit-msg','❌ Fill all fields','err'); return; }
+            if (!/^\d{4}$/.test(pin)) { showMsg('edit-msg','❌ PIN must be 4 digits','err'); return; }
+            const s=app.staff.find(x=>x.id===currentEditingStaffId);
+            if (s) { s.name=name; s.position=position; s.pin=pin; saveData(); closeEditModal(); render(); }
         }
 
-        // Camera functions
-        async function startCamera() {
-            try {
-                if (stream) {
-                    stream.getTracks().forEach(track => track.stop());
-                }
+        // ═══════════════════════════════════════════════
+        // HELPERS
+        // ═══════════════════════════════════════════════
+        function calcH(i, o) { if(!i||!o) return 0; const [h1,m1]=i.split(':').map(Number),[h2,m2]=o.split(':').map(Number); return ((h2*60+m2)-(h1*60+m1))/60; }
+        function calcOT(o) { if(!o) return 0; const [h]=o.split(':').map(Number); return h>=20?1:0; }
+        function today() { const n=new Date(); return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0'); }
+        function fmtTime(d) { return d.toLocaleTimeString('en-US',{hour12:false}); }
+        function showMsg(id, txt, cls) { const el=document.getElementById(id); if(!el)return; el.className='msg '+cls; el.textContent=txt; el.style.display='block'; setTimeout(()=>{el.style.display='none';},3500); }
+        function adminRequired() { return `<div style="text-align:center;padding:60px 20px;"><div style="font-size:56px;margin-bottom:16px;">🔒</div><div style="font-size:20px;font-weight:800;color:var(--text-1);margin-bottom:8px;">Admin Access Required</div><p style="color:var(--text-2);margin-bottom:24px;font-size:15px;">Login to view this section</p><button class="btn-primary" onclick="showAdminLogin()" style="padding:14px 32px;">Login as Admin</button></div>`; }
 
-                const constraints = {
-                    video: {
-                        facingMode: currentFacingMode,
-                        width: { ideal: 1920 },
-                        height: { ideal: 1080 }
-                    },
-                    audio: false
-                };
-
-                stream = await navigator.mediaDevices.getUserMedia(constraints);
-                video.srcObject = stream;
-                
-                captureBtn.disabled = false;
-                switchBtn.disabled = false;
-                startBtn.textContent = 'Stop Camera';
-                updateCameraStatus('Camera active and ready', false);
-
-            } catch (error) {
-                console.error('Error accessing camera:', error);
-                updateCameraStatus('Error: Could not access camera. Please grant permissions.', true);
-            }
-        }
-
-        function stopCamera() {
-            if (stream) {
-                stream.getTracks().forEach(track => track.stop());
-                video.srcObject = null;
-                stream = null;
-                captureBtn.disabled = true;
-                switchBtn.disabled = true;
-                startBtn.textContent = 'Start Camera';
-                updateCameraStatus('Camera stopped');
-            }
-        }
-
-        function switchCamera() {
-            currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
-            startCamera();
-            updateCameraStatus('Switching camera...');
-        }
-
-        function capturePhoto() {
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            
-            const context = canvas.getContext('2d');
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
-            
-            const imageData = canvas.toDataURL('image/jpeg', 0.8);
-            const photoId = Date.now();
-            photos.push({ id: photoId, data: imageData });
-            
-            // Store photo for remote access
-            localStorage.setItem(`photo_${sessionId}_${photoId}`, imageData);
-            
-            displayCameraPhotos();
-            updateCameraStatus(`Photo captured! Total: ${photos.length}`, false);
-        }
-
-        function displayCameraPhotos() {
-            const photosDiv = document.getElementById('cameraPhotos');
-            photosDiv.innerHTML = '';
-            
-            photos.forEach((photo, index) => {
-                const photoItem = document.createElement('div');
-                photoItem.className = 'photo-item';
-                
-                photoItem.innerHTML = `
-                    <img src="${photo.data}" alt="Captured photo ${index + 1}">
-                    <div class="photo-actions">
-                        <button class="btn-success" onclick="downloadPhoto(${index})">Download</button>
-                        <button class="btn-danger" onclick="deletePhoto(${index})">Delete</button>
+        // ═══════════════════════════════════════════════
+        // CLOCK VIEW
+        // ═══════════════════════════════════════════════
+        function renderClock() {
+            const now = new Date(), td = today();
+            const todayRecs = app.records.filter(r => r.date === td);
+            return `
+                ${!authorizedDevices.some(d=>d.id===deviceId) ? `
+                    <div class="install-banner" style="display:flex;">
+                        <span class="install-icon">📱</span>
+                        <div><strong>Authorize This Device</strong>Tap to enable clock in/out on this device</div>
+                        <button class="close-banner" onclick="quickAuthDevice()">🔓</button>
+                    </div>` : ''}
+                <div class="clock-hero">
+                    <div class="date-line" id="hero-date">${now.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}</div>
+                    <div class="time-display" id="hero-time">${now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}</div>
+                    <div class="day-name">${now.toLocaleDateString('en-US',{weekday:'long'})}</div>
+                </div>
+                <div class="card">
+                    <div class="form-group" style="margin-bottom:14px;">
+                        <label>Select Staff</label>
+                        <select id="staff-sel">
+                            <option value="">Choose staff...</option>
+                            ${app.staff.map(s=>`<option value="${s.id}">${s.name}</option>`).join('')}
+                        </select>
                     </div>
-                `;
-                
-                photosDiv.appendChild(photoItem);
+                    <div class="form-group" style="margin-bottom:18px;">
+                        <label>PIN</label>
+                        <input type="password" id="pin-inp" placeholder="4-digit PIN" maxlength="4" inputmode="numeric" autocomplete="off">
+                    </div>
+                    <div class="clock-btn-row">
+                        <button class="clock-action-btn in" onclick="clockIn()"><span class="btn-emoji">⏰</span>Clock In</button>
+                        <button class="clock-action-btn out" onclick="clockOut()"><span class="btn-emoji">🏁</span>Clock Out</button>
+                    </div>
+                    <div id="clock-msg" class="msg" style="display:none;"></div>
+                </div>
+                ${!app.adminMode ? `<div style="text-align:center;margin-top:8px;"><button class="btn-muted btn-sm" onclick="showAdminLogin()">🔐 Admin Mode</button></div>` : `<div style="text-align:center;margin-top:8px;"><button class="btn-danger btn-sm" onclick="exitAdminMode()">🚪 Exit Admin Mode</button></div>`}
+                ${renderTodayCards()}
+            `;
+        }
+
+        function renderTodayCards() {
+            const td = today(), recs = app.records.filter(r => r.date === td);
+            if (recs.length === 0) return `<div style="text-align:center;padding:32px;color:var(--text-3);font-size:14px;">No activity yet today</div>`;
+            return `
+                <div style="margin-top:20px;">
+                    <div style="font-size:14px;font-weight:700;color:var(--text-2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.6px;">Today's Activity</div>
+                    ${recs.map(r => {
+                        const s = app.staff.find(x=>x.id===r.sid);
+                        const h = r.status ? 0 : calcH(r.in, r.out);
+                        const isUnder = !r.status && r.out && h < app.settings.fullShiftHours;
+                        const cls = r.status ? '' : (r.out ? (isUnder ? 'undertime' : 'complete') : 'ongoing');
+                        let statusTxt = r.status ? {rest:'🏖️ Rest Day',absent:'❌ Absent'}[r.status] : (r.out ? (isUnder ? '⚠️ Undertime':'✅ Complete') : '⏳ In Progress');
+                        return `<div class="activity-card ${cls}">
+                            <div>
+                                <div class="name">${s?s.name:'Unknown'}</div>
+                                <div class="times">${r.in||'-'} → ${r.out||'...'}</div>
+                                <div style="font-size:12px;margin-top:3px;color:var(--text-2);">${statusTxt}</div>
+                            </div>
+                            <div class="hours-badge">${r.status?'-':(h>0?h.toFixed(1)+'h':'-')}</div>
+                        </div>`;
+                    }).join('')}
+                </div>`;
+        }
+
+        // ═══════════════════════════════════════════════
+        // CLOCK IN / OUT
+        // ═══════════════════════════════════════════════
+        function clockIn() {
+            const sid=document.getElementById('staff-sel').value, pin=document.getElementById('pin-inp').value;
+            if (!sid||!pin) return showMsg('clock-msg','Select staff and enter PIN','err');
+            const s=app.staff.find(x=>x.id==sid);
+            if (!s||s.pin!==pin) return showMsg('clock-msg','Invalid PIN','err');
+            const td=today(), existing=app.records.find(r=>r.sid==sid&&r.date===td);
+            if (existing&&existing.in&&!existing.status) return showMsg('clock-msg','Already clocked in today','err');
+            const time=fmtTime(new Date());
+            if (existing) { existing.in=time; existing.out=null; existing.status=null; }
+            else app.records.push({sid,date:td,in:time,out:null,status:null});
+            const lt=new Date('2000-01-01 '+time), ct=new Date('2000-01-01 07:35:00');
+            let lateMsg='';
+            if (lt>ct) {
+                const exLate=app.deductions.find(d=>d.staffId===sid&&d.deductionDate===td&&d.type==='late');
+                if (!exLate) {
+                    const lm=Math.floor((lt-ct)/60000), ld=roundUp((getHourlyRate(s.position)/60)*lm);
+                    app.deductions.push({id:'deduct-'+Date.now(),staffId:sid,amount:ld,reason:`Late Login: ${lm} minute(s) late (at ${time})`,deductionDate:td,createdDate:new Date().toISOString(),status:'pending',type:'late'});
+                    lateMsg=` ⚠️ Late ${lm} min – ₱${ld} deducted`;
+                } else lateMsg=' ⚠️ Late (deduction already recorded)';
+            }
+            saveData();
+            showMsg('clock-msg',`✅ ${s.name} clocked in at ${time}${lateMsg}`, lateMsg?'err':'ok');
+            document.getElementById('pin-inp').value='';
+            sendTelegramClockin(s, time, lateMsg);
+            render();
+        }
+
+        function clockOut() {
+            const sid=document.getElementById('staff-sel').value, pin=document.getElementById('pin-inp').value;
+            if (!sid||!pin) return showMsg('clock-msg','Select staff and enter PIN','err');
+            const s=app.staff.find(x=>x.id==sid);
+            if (!s||s.pin!==pin) return showMsg('clock-msg','Invalid PIN','err');
+            const td=today(), rec=app.records.find(r=>r.sid==sid&&r.date===td);
+            if (!rec) return showMsg('clock-msg','No clock-in record for today','err');
+            if (!rec.in) return showMsg('clock-msg','Not clocked in yet today','err');
+            if (rec.out) return showMsg('clock-msg','Already clocked out today','err');
+            if (rec.status) return showMsg('clock-msg','Cannot clock out – marked as '+rec.status,'err');
+            pendingClockOut = {sid, pin};
+            showClockoutModal();
+        }
+
+        function showClockoutModal() {
+            const list=app.settings.clockOutChecklist||DEFAULT_CLOCKOUT_CHECKLIST, fare=app.settings.clockOutFarewell||DEFAULT_CLOCKOUT_FAREWELL;
+            document.getElementById('clockout-checklist-display').innerHTML=list.map(i=>`<li><span class="check-icon">☑️</span><span>${i}</span></li>`).join('');
+            document.getElementById('clockout-farewell-display').textContent=fare;
+            document.getElementById('clockout-modal').style.display='flex';
+        }
+        function closeClockoutModal() { document.getElementById('clockout-modal').style.display='none'; pendingClockOut=null; }
+        function confirmClockOut() {
+            if (!pendingClockOut) return;
+            const {sid}=pendingClockOut;
+            document.getElementById('clockout-modal').style.display='none'; pendingClockOut=null;
+            const s=app.staff.find(x=>x.id==sid), td=today(), rec=app.records.find(r=>r.sid==sid&&r.date===td);
+            const time=fmtTime(new Date()); rec.out=time;
+            const hours=calcH(rec.in,time);
+            saveData();
+            showMsg('clock-msg',`✅ ${s.name} clocked out at ${time} (${hours.toFixed(2)} hrs)`,'ok');
+            document.getElementById('pin-inp').value='';
+            if (app.settings.telegram.enabled&&app.settings.telegram.notifications.clockOut) {
+                const dn=localStorage.getItem('deviceName')||'Unknown'; const isU=hours<app.settings.fullShiftHours;
+                sendTelegramNotification(`🔴 <b>Time-Out</b>\n\n<b>Name:</b> ${s.name}\n<b>Date:</b> ${new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}\n<b>Time:</b> ${time}\n<b>Hours:</b> ${hours.toFixed(2)}\n${isU?'<b>⚠️ Status:</b> Undertime\n':''}<b>Device:</b> ${dn}`);
+            }
+            render();
+        }
+
+        function sendTelegramClockin(s, time, lateMsg) {
+            if (!app.settings.telegram.enabled||!app.settings.telegram.notifications.clockIn) return;
+            const dn=localStorage.getItem('deviceName')||'Unknown';
+            let notif=`🟢 <b>Time-In</b>\n\n<b>Name:</b> ${s.name}\n<b>Date:</b> ${new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}\n<b>Time:</b> ${time}\n`;
+            if (lateMsg) { const lt=new Date('2000-01-01 '+time),ct=new Date('2000-01-01 07:35:00'),lm=Math.floor((lt-ct)/60000); notif+=`<b>⚠️ Status:</b> LATE (${lm} min)\n<b>💸 Deduction:</b> ₱${roundUp((getHourlyRate(s.position)/60)*lm).toFixed(2)}\n`; }
+            notif+=`<b>Device:</b> ${dn}`;
+            sendTelegramNotification(notif);
+        }
+
+        // ═══════════════════════════════════════════════
+        // VIEW DTR
+        // ═══════════════════════════════════════════════
+        function renderView() {
+            if (!app.adminMode) return adminRequired();
+            return `
+                <div class="page-title">📋 View DTR</div>
+                <div class="card">
+                    <div class="form-grid">
+                        <div class="form-group"><label>Staff</label><select id="view-staff" onchange="render()"><option value="">All Staff</option>${app.staff.map(s=>`<option value="${s.id}">${s.name}</option>`).join('')}</select></div>
+                        <div class="form-group"><label>Start Date</label><input type="date" id="view-start" value="${app.start}" onchange="app.start=this.value;render()"></div>
+                        <div class="form-group"><label>End Date</label><input type="date" id="view-end" value="${app.end}" onchange="app.end=this.value;render()"></div>
+                    </div>
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                        <button class="btn-warning btn-sm" onclick="showMarkOptions()">📝 Mark Attendance</button>
+                        <button class="btn-info btn-sm" onclick="toggleManualEntry()" id="toggle-manual-btn">➕ Manual Entry</button>
+                    </div>
+                </div>
+                <div id="mark-section" style="display:none;" class="card">
+                    <div class="section-title">📝 Mark Attendance</div>
+                    <div class="form-grid">
+                        <div class="form-group"><label>Staff</label><select id="mark-staff">${app.staff.map(s=>`<option value="${s.id}">${s.name}</option>`).join('')}</select></div>
+                        <div class="form-group"><label>Date</label><input type="date" id="mark-date" value="${today()}"></div>
+                        <div class="form-group"><label>Status</label><select id="mark-status"><option value="rest">Rest Day</option><option value="absent">Absent</option></select></div>
+                    </div>
+                    <div style="display:flex;gap:10px;margin-top:12px;">
+                        <button class="btn-primary btn-sm" onclick="markAttendance()">✅ Save</button>
+                        <button class="btn-muted btn-sm" onclick="hideMarkOptions()">Cancel</button>
+                    </div>
+                    <div id="mark-msg" class="msg" style="display:none;margin-top:10px;"></div>
+                </div>
+                <div id="manual-entry-section" style="display:none;" class="card">
+                    <div class="section-title">➕ Manual Time Entry</div>
+                    <div class="form-grid">
+                        <div class="form-group"><label>Staff</label><select id="manual-staff"><option value="">Choose staff...</option>${app.staff.map(s=>`<option value="${s.id}">${s.name}</option>`).join('')}</select></div>
+                        <div class="form-group"><label>Date</label><input type="date" id="manual-date" value="${today()}"></div>
+                        <div class="form-group"><label>Login Time</label><input type="time" id="manual-login"></div>
+                        <div class="form-group"><label>Logout Time</label><input type="time" id="manual-logout"></div>
+                        <div class="form-group"><label>Status</label><select id="manual-status"><option value="">Regular Day</option><option value="rest">Rest Day</option><option value="absent">Absent</option></select></div>
+                        <div class="form-group"><label>Notes</label><input type="text" id="manual-notes" placeholder="Optional"></div>
+                    </div>
+                    <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;">
+                        <button class="btn-primary btn-sm" onclick="addManualEntry()">➕ Add Entry</button>
+                        <button class="btn-muted btn-sm" onclick="clearManualForm()">🔄 Clear</button>
+                    </div>
+                    <div id="manual-msg" class="msg" style="display:none;margin-top:12px;"></div>
+                </div>
+                ${renderDTRTable()}`;
+        }
+
+        function showMarkOptions() { document.getElementById('mark-section').style.display='block'; }
+        function hideMarkOptions() { document.getElementById('mark-section').style.display='none'; }
+        function toggleManualEntry() {
+            const s=document.getElementById('manual-entry-section'), b=document.getElementById('toggle-manual-btn');
+            if(s.style.display==='none'){s.style.display='block';b.textContent='✕ Close Entry';}else{s.style.display='none';b.textContent='➕ Manual Entry';}
+        }
+        function markAttendance() {
+            const sid=document.getElementById('mark-staff').value, date=document.getElementById('mark-date').value, status=document.getElementById('mark-status').value;
+            if(!sid||!date) return showMsg('mark-msg','Fill all fields','err');
+            const ex=app.records.find(r=>r.sid===sid&&r.date===date);
+            if(ex){ex.status=status;ex.in=null;ex.out=null;}else app.records.push({sid,date,in:null,out:null,status});
+            saveData(); showMsg('mark-msg','Attendance marked!','ok'); setTimeout(()=>{hideMarkOptions();render();},1500);
+        }
+
+        function renderDTRTable() {
+            const sf=document.getElementById('view-staff')?.value||'';
+            let f=app.records;
+            if(sf) f=f.filter(r=>r.sid===sf);
+            if(app.start) f=f.filter(r=>r.date>=app.start);
+            if(app.end) f=f.filter(r=>r.date<=app.end);
+            f.sort((a,b)=>b.date.localeCompare(a.date));
+            if(f.length===0) return `<div class="card" style="text-align:center;color:var(--text-3);padding:40px;">No records found</div>`;
+            return `<div class="table-wrap"><table>
+                <thead><tr><th>Date</th><th>Staff</th><th>In</th><th>Out</th><th>Hrs</th><th>Status</th><th>Actions</th></tr></thead>
+                <tbody>${f.map(r=>{
+                    const s=app.staff.find(x=>x.id===r.sid), h=r.status?'-':calcH(r.in,r.out).toFixed(2);
+                    const isU=!r.status&&r.out&&calcH(r.in,r.out)<app.settings.fullShiftHours;
+                    let st=r.status?{rest:'🏖️ Rest',absent:'❌ Absent'}[r.status]:(r.out?'✅':'⏳');
+                    if(isU) st='<span class="undertime-badge">⚠️ Late</span>';
+                    const isEd=app.editingRecord&&app.editingRecord.sid===r.sid&&app.editingRecord.date===r.date;
+                    if(isEd) return `<tr style="background:#fffbeb;"><td>${r.date}</td><td>${s?s.name:'?'}</td><td><input type="time" id="edit-in" value="${r.in||''}" class="edit-input"></td><td><input type="time" id="edit-out" value="${r.out||''}" class="edit-input"></td><td>${h}</td><td>${st}</td><td><div class="action-buttons"><button class="btn-save btn-sm" onclick="saveEdit('${r.sid}','${r.date}')">Save</button><button class="btn-cancel btn-sm" onclick="cancelEdit()">Cancel</button></div></td></tr>`;
+                    return `<tr class="${isU?'undertime-row':''}"><td>${r.date}</td><td>${s?s.name:'?'}</td><td>${r.in||'-'}</td><td>${r.out||'-'}</td><td>${h}</td><td>${st}</td><td><div class="action-buttons"><button class="btn-edit btn-sm" onclick="editRec('${r.sid}','${r.date}')">Edit</button><button class="btn-danger btn-sm" onclick="delRec('${r.sid}','${r.date}')">Del</button></div></td></tr>`;
+                }).join('')}</tbody></table></div>`;
+        }
+
+        function delRec(sid,date){if(!confirm('Delete this record?'))return;app.records=app.records.filter(r=>!(r.sid===sid&&r.date===date));saveData();render();}
+        function editRec(sid,date){const r=app.records.find(r=>r.sid===sid&&r.date===date);if(!r)return;if(r.status){alert('Cannot edit Rest Day or Absent records');return;}app.editingRecord={sid,date};render();}
+        function saveEdit(sid,date){const r=app.records.find(r=>r.sid===sid&&r.date===date);if(!r)return;const ni=document.getElementById('edit-in').value,no=document.getElementById('edit-out').value;if(!ni&&!no){alert('Enter at least one time');return;}r.in=ni||null;r.out=no||null;app.editingRecord=null;saveData();render();}
+        function cancelEdit(){app.editingRecord=null;render();}
+
+        // ═══════════════════════════════════════════════
+        // PAYROLL
+        // ═══════════════════════════════════════════════
+        function renderPayroll() {
+            if (!app.adminMode) return adminRequired();
+            return `
+                <div class="page-title">💰 Payroll</div>
+                <div class="card">
+                    <div class="form-grid">
+                        <div class="form-group"><label>Start Date</label><input type="date" id="pay-start" value="${app.start}" onchange="app.start=this.value;render()"></div>
+                        <div class="form-group"><label>End Date</label><input type="date" id="pay-end" value="${app.end}" onchange="app.end=this.value;render()"></div>
+                    </div>
+                </div>
+                ${renderPayrollCards()}`;
+        }
+
+        function renderPayrollCards() {
+            if (!app.start||!app.end) return `<div class="card" style="text-align:center;color:var(--text-3);padding:40px;">Select a date range to calculate payroll</div>`;
+            return app.staff.map(s => {
+                const recs=app.records.filter(r=>{const rd=new Date(r.date);return r.sid===s.id&&rd>=new Date(app.start)&&rd<=new Date(app.end);});
+                let fd=0,ud=0,uh=0,ph=0,oh=0;
+                recs.forEach(r=>{if(!r.status){const h=calcH(r.in,r.out);if(h>=app.settings.fullShiftHours){fd++;oh+=calcOT(r.out);}else if(h>0){ud++;ph+=h;uh+=(app.settings.fullShiftHours-h);}}});
+                const rt=RATES[s.position],hr=getHourlyRate(s.position);
+                const rp=roundUp(fd*rt.daily),pp=roundUp(ph*hr),op=roundUp(oh*rt.ot),gross=rp+pp+op;
+                const dip=app.deductions.filter(d=>{const dd=new Date(d.deductionDate);return d.staffId===s.id&&dd>=new Date(app.start)&&dd<=new Date(app.end)&&d.status==='pending';});
+                const td=roundUp(dip.reduce((sum,d)=>sum+d.amount,0)),net=gross-td;
+                return `<div class="card">
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;">
+                        <div><div class="payroll-name">${s.name}</div><span class="badge badge-blue">${s.position}</span></div>
+                        <div class="payroll-net">₱${net.toLocaleString()}</div>
+                    </div>
+                    <div class="payroll-grid">
+                        <div class="payroll-line">Full Days: <span>${fd}</span></div>
+                        <div class="payroll-line">Undertime Days: <span style="color:${ud>0?'var(--amber)':'inherit'}">${ud}</span></div>
+                        <div class="payroll-line">OT Hours: <span>${oh||0}</span></div>
+                        <div class="payroll-line">Regular Pay: <span>₱${rp.toLocaleString()}</span></div>
+                        ${pp>0?`<div class="payroll-line">Partial Day Pay: <span>₱${pp.toLocaleString()}</span></div>`:''}
+                        ${op>0?`<div class="payroll-line">OT Pay: <span>₱${op.toLocaleString()}</span></div>`:''}
+                        <div class="payroll-line">Gross Pay: <span>₱${gross.toLocaleString()}</span></div>
+                        ${td>0?`<div class="payroll-line">Deductions: <span class="payroll-deduct">-₱${td.toLocaleString()}</span></div>`:''}
+                    </div>
+                    <button class="btn-info btn-sm" onclick="printPayslip('${s.id}')">🖨️ Print Payslip</button>
+                </div>`;
+            }).join('');
+        }
+
+        function printPayslip(staffId) {
+            if(!app.start||!app.end){alert('Select a date range first');return;}
+            const staff=app.staff.find(s=>s.id===staffId);if(!staff)return;
+            const recs=app.records.filter(r=>{const rd=new Date(r.date);return r.sid===staffId&&rd>=new Date(app.start)&&rd<=new Date(app.end);});
+            let fd=0,ud=0,uh=0,ph=0,oh=0;
+            recs.forEach(r=>{if(!r.status){const h=calcH(r.in,r.out);if(h>=app.settings.fullShiftHours){fd++;oh+=calcOT(r.out);}else if(h>0){ud++;ph+=h;uh+=(app.settings.fullShiftHours-h);}}});
+            const rt=RATES[staff.position],hr=getHourlyRate(staff.position);
+            const rp=roundUp(fd*rt.daily),pp=roundUp(ph*hr),op=roundUp(oh*rt.ot),gross=rp+pp+op;
+            const dip=app.deductions.filter(d=>{const dd=new Date(d.deductionDate);return d.staffId===staffId&&dd>=new Date(app.start)&&dd<=new Date(app.end)&&d.status==='pending';});
+            const td=roundUp(dip.reduce((sum,d)=>sum+d.amount,0)),net=gross-td;
+            const pw=window.open('','','width=800,height=700');
+            pw.document.write(`<!DOCTYPE html><html><head><title>Payslip - ${staff.name}</title><style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:-apple-system,Arial,sans-serif;padding:40px;background:white;}.payslip{max-width:680px;margin:0 auto;border:2px solid #1a2332;border-radius:12px;overflow:hidden;}.header{background:#1a2332;color:white;padding:28px;text-align:center;}.header h1{font-size:24px;margin-bottom:6px;}.header p{opacity:.7;font-size:14px;}table{width:100%;border-collapse:collapse;}th{background:#f1f5f9;padding:12px;text-align:left;font-size:12px;color:#475569;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #e2e8f0;}td{padding:12px;border-bottom:1px solid #f1f5f9;font-size:14px;}.total{background:#1a2332;color:white;font-weight:bold;font-size:16px;}.sigs{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin:32px 28px;}.sig-box{text-align:center;}.sig-line{border-top:2px solid #e2e8f0;margin-top:48px;padding-top:10px;font-size:13px;color:#475569;}@media print{.no-print{display:none;}}</style></head>
+            <body><div class="payslip"><div class="header"><h1>SIR RAMOS DRUGSTORE</h1><p>PAYSLIP — ${new Date(app.start).toLocaleDateString()} to ${new Date(app.end).toLocaleDateString()}</p></div>
+            <table>
+                <tr><th>Employee</th><td colspan="2"><strong>${staff.name}</strong> (${staff.position})</td></tr>
+                ${fd>0?`<tr><th>Full Days × Rate</th><td colspan="2">${fd} days × ₱${rt.daily} = ₱${rp}</td></tr>`:''}
+                ${ud>0?`<tr><th>Undertime Days</th><td colspan="2">${ud} days / ${ph.toFixed(2)} hrs worked × ₱${hr.toFixed(2)}/hr = ₱${pp}</td></tr>`:''}
+                ${oh>0?`<tr><th>Overtime</th><td colspan="2">${oh} hr × ₱${rt.ot}/hr = ₱${op}</td></tr>`:''}
+                <tr><th>Gross Pay</th><td colspan="2"><strong>₱${gross}</strong></td></tr>
+                ${dip.map(d=>`<tr><th style="color:#ef4444;">${d.type==='late'?'⏰ ':''} ${d.reason||'Deduction'}</th><td colspan="2" style="color:#ef4444;">-₱${roundUp(d.amount)}</td></tr>`).join('')}
+                ${td>0?`<tr><th>Total Deductions</th><td colspan="2" style="color:#ef4444;"><strong>-₱${td}</strong></td></tr>`:''}
+                <tr class="total"><th>NET PAY</th><td colspan="2">₱${net}</td></tr>
+            </table>
+            <div class="sigs"><div class="sig-box"><div class="sig-line">Employee Signature</div></div><div class="sig-box"><div class="sig-line">Authorized Signature</div></div></div>
+            </div><div class="no-print" style="text-align:center;margin-top:24px;"><button onclick="window.print()" style="padding:12px 28px;background:#1a2332;color:white;border:none;border-radius:8px;font-size:15px;cursor:pointer;margin-right:10px;">🖨️ Print</button><button onclick="window.close()" style="padding:12px 28px;background:#e2e8f0;border:none;border-radius:8px;font-size:15px;cursor:pointer;">Close</button></div></body></html>`);
+            pw.document.close();
+        }
+
+        // ═══════════════════════════════════════════════
+        // DEDUCTIONS
+        // ═══════════════════════════════════════════════
+        function renderDeductions() {
+            if (!app.adminMode) return adminRequired();
+            return `
+                <div class="page-title">💸 Deductions</div>
+                <div class="card">
+                    <div class="section-title">⏰ Scan for Late Logins</div>
+                    <div class="form-grid" style="margin-bottom:14px;">
+                        <div class="form-group"><label>From Date</label><input type="date" id="scan-start" value="${app.start||today()}"></div>
+                        <div class="form-group"><label>To Date</label><input type="date" id="scan-end" value="${app.end||today()}"></div>
+                    </div>
+                    <button class="btn-warning btn-sm" onclick="scanForLateLogins()">🔍 Scan & Create Late Deductions</button>
+                    <div id="scan-msg" class="msg" style="display:none;margin-top:12px;"></div>
+                </div>
+                <div class="card">
+                    <div class="section-title">➕ Record Cash Advance</div>
+                    <div class="form-grid">
+                        <div class="form-group"><label>Employee</label><select id="deduction-staff"><option value="">Choose...</option>${app.staff.map(s=>`<option value="${s.id}">${s.name}</option>`).join('')}</select></div>
+                        <div class="form-group"><label>Amount (₱)</label><input type="number" id="deduction-amount" placeholder="0.00" min="0" step="0.01" inputmode="decimal"></div>
+                        <div class="form-group"><label>Deduction Date</label><input type="date" id="deduction-date" value="${today()}"></div>
+                        <div class="form-group"><label>Reason</label><input type="text" id="deduction-reason" placeholder="e.g., Cash advance"></div>
+                    </div>
+                    <button class="btn-primary btn-sm" onclick="addDeduction()" style="margin-top:12px;">💾 Record</button>
+                    <div id="deduction-msg" class="msg" style="display:none;"></div>
+                </div>
+                ${renderDeductionsList()}`;
+        }
+
+        function renderDeductionsList() {
+            if (app.deductions.length===0) return `<div class="card" style="text-align:center;color:var(--text-3);padding:40px;">No deductions recorded yet</div>`;
+            const pending=app.deductions.filter(d=>d.status==='pending'), applied=app.deductions.filter(d=>d.status==='applied');
+            // Late deduction summary
+            const lateByStaff={};
+            pending.filter(d=>d.type==='late').forEach(d=>{
+                if(!lateByStaff[d.staffId]){lateByStaff[d.staffId]={count:0,total:0,staff:app.staff.find(s=>s.id===d.staffId)};}
+                lateByStaff[d.staffId].count++; lateByStaff[d.staffId].total+=d.amount;
             });
+            return `
+                ${Object.keys(lateByStaff).length>0?`<div class="card" style="border-left:4px solid var(--amber);">
+                    <div class="section-title" style="color:var(--amber);">⏰ Late Login Summary</div>
+                    ${Object.values(lateByStaff).map(x=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--surface-2);border-radius:var(--radius-sm);margin-bottom:8px;">
+                        <div><div style="font-weight:700;">${x.staff?x.staff.name:'Unknown'}</div><div style="font-size:12px;color:var(--text-2);">${x.count} late login${x.count>1?'s':''}</div></div>
+                        <div style="font-weight:800;color:var(--red);font-size:18px;">₱${x.total.toFixed(2)}</div>
+                    </div>`).join('')}
+                </div>`:''}
+                ${pending.length>0?`<div class="card">
+                    <div class="section-title" style="color:var(--amber);">⏳ Pending (${pending.length})</div>
+                    <div class="table-wrap"><table><thead><tr><th>Date</th><th>Employee</th><th>Amount</th><th>Reason</th><th>Actions</th></tr></thead>
+                    <tbody>${pending.map(d=>{const st=app.staff.find(s=>s.id===d.staffId);return`<tr class="${d.type==='late'?'deduction-item':''}"><td>${new Date(d.deductionDate).toLocaleDateString()}</td><td>${st?st.name:'?'}</td><td style="color:var(--red);font-weight:700;">₱${d.amount.toFixed(2)}</td><td style="font-size:12px;">${d.type==='late'?'⏰ ':''}${d.reason||'-'}</td><td><div class="action-buttons"><button class="btn-warning btn-sm" onclick="markDeductionApplied('${d.id}')">✅</button><button class="btn-danger btn-sm" onclick="deleteDeduction('${d.id}')">🗑️</button></div></td></tr>`;}).join('')}
+                    </tbody></table></div>
+                </div>`:''}
+                ${applied.length>0?`<div class="card">
+                    <div class="section-title" style="color:var(--green);">✅ Applied (${applied.length})</div>
+                    <div class="table-wrap"><table><thead><tr><th>Date</th><th>Employee</th><th>Amount</th><th>Reason</th><th></th></tr></thead>
+                    <tbody>${applied.map(d=>{const st=app.staff.find(s=>s.id===d.staffId);return`<tr style="opacity:.65;"><td>${new Date(d.deductionDate).toLocaleDateString()}</td><td>${st?st.name:'?'}</td><td>₱${d.amount.toFixed(2)}</td><td style="font-size:12px;">${d.reason||'-'}</td><td><button class="btn-danger btn-sm" onclick="deleteDeduction('${d.id}')">🗑️</button></td></tr>`;}).join('')}
+                    </tbody></table></div>
+                </div>`:''}`;
         }
 
-        function downloadPhoto(index) {
-            const link = document.createElement('a');
-            link.download = `photo_${Date.now()}.jpg`;
-            link.href = photos[index].data;
-            link.click();
+        function addDeduction() {
+            const sid=document.getElementById('deduction-staff').value, amt=parseFloat(document.getElementById('deduction-amount').value), dd=document.getElementById('deduction-date').value, reason=document.getElementById('deduction-reason').value.trim();
+            if(!sid||!amt||!dd) return showMsg('deduction-msg','❌ Fill all required fields','err');
+            if(amt<=0) return showMsg('deduction-msg','❌ Amount must be greater than 0','err');
+            const staff=app.staff.find(s=>s.id===sid);if(!staff) return showMsg('deduction-msg','❌ Invalid employee','err');
+            app.deductions.push({id:'ded-'+Date.now(),staffId:sid,amount:amt,deductionDate:dd,reason:reason||'Cash advance',status:'pending',createdDate:new Date().toISOString()});
+            saveData();
+            document.getElementById('deduction-staff').value='';document.getElementById('deduction-amount').value='';document.getElementById('deduction-reason').value='';
+            showMsg('deduction-msg',`✅ ₱${amt.toFixed(2)} recorded for ${staff.name}`,'ok');
+            setTimeout(()=>render(),1500);
         }
 
-        function deletePhoto(index) {
-            const photoId = photos[index].id;
-            localStorage.removeItem(`photo_${sessionId}_${photoId}`);
-            photos.splice(index, 1);
-            displayCameraPhotos();
-            updateCameraStatus(`Photo deleted. Total: ${photos.length}`);
+        function scanForLateLogins() {
+            const s=document.getElementById('scan-start').value, e=document.getElementById('scan-end').value;
+            if(!s||!e) return showMsg('scan-msg','❌ Select both dates','err');
+            if(new Date(s)>new Date(e)) return showMsg('scan-msg','❌ Start before end','err');
+            let found=0,created=0;
+            app.records.filter(r=>{const rd=new Date(r.date);return rd>=new Date(s)&&rd<=new Date(e)&&r.in;}).forEach(r=>{
+                const lt=new Date('2000-01-01 '+r.in),ct=new Date('2000-01-01 07:35:00');
+                if(lt>ct){found++;if(!app.deductions.find(d=>d.staffId===r.sid&&d.deductionDate===r.date&&d.type==='late')){
+                    const st=app.staff.find(x=>x.id===r.sid);if(!st)return;
+                    const lm=Math.floor((lt-ct)/60000),ld=roundUp((getHourlyRate(st.position)/60)*lm);
+                    app.deductions.push({id:'deduct-'+Date.now()+'-'+Math.random().toString(36).substr(2,5),staffId:r.sid,amount:ld,reason:`Late Login: ${lm} min late (at ${r.in})`,deductionDate:r.date,createdDate:new Date().toISOString(),status:'pending',type:'late'});
+                    created++;
+                }}
+            });
+            if(created>0){saveData();showMsg('scan-msg',`✅ ${found} late login(s) found. ${created} deduction(s) created.`,'ok');setTimeout(()=>render(),1500);}
+            else if(found>0) showMsg('scan-msg',`ℹ️ ${found} late login(s) found — deductions already exist for all.`,'ok');
+            else showMsg('scan-msg','ℹ️ No late logins found in this range.','ok');
         }
 
-        function updateCameraStatus(message, isError = false) {
-            const statusDiv = document.getElementById('cameraStatusMsg');
-            statusDiv.textContent = message;
-            statusDiv.className = isError ? 'status error' : 'status success';
+        function markDeductionApplied(id){if(!confirm('Mark as applied?'))return;const d=app.deductions.find(x=>x.id===id);if(d){d.status='applied';saveData();render();}}
+        function deleteDeduction(id){if(!confirm('Delete this deduction?'))return;app.deductions=app.deductions.filter(d=>d.id!==id);saveData();render();}
+
+        // ═══════════════════════════════════════════════
+        // STAFF
+        // ═══════════════════════════════════════════════
+        function renderStaff() {
+            if (!app.adminMode) return adminRequired();
+            return `
+                <div class="page-title">👥 Staff</div>
+                <div class="card">
+                    <div class="section-title">➕ Add Staff</div>
+                    <div class="form-grid">
+                        <div class="form-group"><label>Full Name</label><input type="text" id="new-name" placeholder="Enter full name" autocorrect="off"></div>
+                        <div class="form-group"><label>Position</label><select id="new-position"><option value="regular">Regular (₱650/day)</option><option value="senior">Senior (₱700/day)</option><option value="trainee">Trainee (₱500/day)</option></select></div>
+                        <div class="form-group"><label>PIN (4 digits)</label><input type="password" id="new-pin" placeholder="1234" maxlength="4" inputmode="numeric"></div>
+                    </div>
+                    <button class="btn-primary btn-sm" onclick="addStaff()" style="margin-top:12px;">💾 Add Staff Member</button>
+                    <div id="staff-msg" class="msg" style="display:none;"></div>
+                </div>
+                <div style="font-size:13px;font-weight:700;color:var(--text-2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px;">Current Staff (${app.staff.length})</div>
+                ${app.staff.length===0?`<div class="card" style="text-align:center;color:var(--text-3);padding:40px;">No staff yet</div>`:app.staff.map(s=>`<div class="staff-item">
+                    <div>
+                        <div class="staff-name">${s.name}</div>
+                        <div class="staff-meta">${s.position.charAt(0).toUpperCase()+s.position.slice(1)} · ₱${RATES[s.position].daily}/day · ₱${getHourlyRate(s.position).toFixed(2)}/hr</div>
+                    </div>
+                    <div class="action-buttons">
+                        <button class="btn-warning btn-sm" onclick="openEditModal('${s.id}')">✏️</button>
+                        <button class="btn-danger btn-sm" onclick="delStaff('${s.id}')">🗑️</button>
+                    </div>
+                </div>`).join('')}`;
         }
 
-        // Remote Control Functions
-        function connectToCamera() {
-            const input = document.getElementById('sessionIdInput');
-            const sid = input.value.trim();
-            
-            if (sid.length !== 4) {
-                updateRemoteStatus('Please enter a valid 4-digit ID', true);
-                return;
-            }
-            
-            // Check if session exists
-            const sessionData = localStorage.getItem(`camera_session_${sid}`);
-            
-            if (!sessionData) {
-                updateRemoteStatus('Camera not found. Make sure Camera Mode is running with this ID.', true);
-                return;
-            }
-            
-            connectedSessionId = sid;
-            document.getElementById('remoteSessionId').textContent = sid;
-            document.getElementById('remoteSessionInfo').style.display = 'block';
-            document.getElementById('remoteControls').style.display = 'grid';
-            updateRemoteStatus('Connected! You can now control the camera.', false);
-            
-            // Start polling for photos
-            startPhotoPolling();
+        function addStaff() {
+            const name=document.getElementById('new-name').value.trim(),position=document.getElementById('new-position').value,pin=document.getElementById('new-pin').value.trim();
+            if(!name||!pin) return showMsg('staff-msg','Fill all fields','err');
+            if(!/^\d{4}$/.test(pin)) return showMsg('staff-msg','PIN must be 4 digits','err');
+            app.staff.push({id:'staff-'+Date.now(),name,position,pin});
+            saveData();document.getElementById('new-name').value='';document.getElementById('new-pin').value='';
+            showMsg('staff-msg',`✅ ${name} added!`,'ok');setTimeout(render,1500);
         }
 
-        function sendCommand(command) {
-            if (!connectedSessionId) return;
-            
-            const sessionData = localStorage.getItem(`camera_session_${connectedSessionId}`);
-            if (sessionData) {
-                const data = JSON.parse(sessionData);
-                data.command = command;
-                data.commandTimestamp = Date.now();
-                
-                localStorage.setItem(`camera_session_${connectedSessionId}`, JSON.stringify(data));
-                updateRemoteStatus(`Command sent: ${command}`, false);
-            }
+        function delStaff(id) {
+            const s=app.staff.find(x=>x.id===id);if(!s)return;
+            let cm=`Delete ${s.name}?`;
+            if(app.records.some(r=>r.sid===id)) cm+='\n\n⚠️ Also deletes attendance records.';
+            if(app.deductions.some(d=>d.staffId===id)) cm+='\n\n⚠️ Also deletes deduction records.';
+            if(!confirm(cm))return;
+            app.staff=app.staff.filter(x=>x.id!==id);app.records=app.records.filter(r=>r.sid!==id);app.deductions=app.deductions.filter(d=>d.staffId!==id);
+            saveData();render();
         }
 
-        function startPhotoPolling() {
-            if (photoCheckInterval) clearInterval(photoCheckInterval);
-            
-            photoCheckInterval = setInterval(() => {
-                if (!connectedSessionId) return;
-                displayRemotePhotos();
-            }, 1000);
+        // ═══════════════════════════════════════════════
+        // EXPORT
+        // ═══════════════════════════════════════════════
+        function renderExport() {
+            if (!app.adminMode) return adminRequired();
+            return `
+                <div class="page-title">📊 Export</div>
+                <div class="card"><div class="section-title">📋 DTR Records</div><p style="color:var(--text-2);font-size:14px;margin-bottom:14px;">Download all attendance records as CSV</p><button class="btn-primary btn-sm" onclick="expCSV()">⬇️ Download DTR CSV</button></div>
+                <div class="card">
+                    <div class="section-title">💰 Payroll Report</div>
+                    <div class="form-grid" style="margin-bottom:14px;">
+                        <div class="form-group"><label>Start</label><input type="date" id="exp-start" value="${app.start}" onchange="app.start=this.value"></div>
+                        <div class="form-group"><label>End</label><input type="date" id="exp-end" value="${app.end}" onchange="app.end=this.value"></div>
+                    </div>
+                    <button class="btn-primary btn-sm" onclick="expPay()">⬇️ Download Payroll CSV</button>
+                </div>
+                <div class="card"><div class="section-title">📊 Hours Report</div><button class="btn-primary btn-sm" onclick="expXL()">⬇️ Download Excel Report</button></div>
+                <div id="exp-msg" class="msg" style="display:none;margin-top:16px;"></div>`;
         }
 
-        function displayRemotePhotos() {
-            const photosDiv = document.getElementById('remotePhotos');
-            photosDiv.innerHTML = '';
-            
-            // Get all photos for this session
-            const photoKeys = Object.keys(localStorage).filter(key => 
-                key.startsWith(`photo_${connectedSessionId}_`)
-            );
-            
-            photoKeys.forEach(key => {
-                const imageData = localStorage.getItem(key);
-                if (imageData) {
-                    const photoItem = document.createElement('div');
-                    photoItem.className = 'photo-item';
-                    
-                    photoItem.innerHTML = `
-                        <img src="${imageData}" alt="Remote photo">
-                        <div class="photo-actions">
-                            <button class="btn-success" onclick="downloadRemotePhoto('${imageData}')">Download</button>
+        function expCSV(){if(app.records.length===0)return showMsg('exp-msg','No data','err');const rows=[['Date','Staff','Login','Logout','Status'].join(',')];app.records.forEach(r=>{const s=app.staff.find(x=>x.id===r.sid);const st=r.status?{rest:'Rest Day',absent:'Absent'}[r.status]:'-';if(s)rows.push([r.date,`"${s.name}"`,r.in||'-',r.out||'-',st].join(','));});dl(rows.join('\n'),'DTR.csv','text/csv');showMsg('exp-msg','Downloaded!','ok');}
+        function expXL(){if(app.records.length===0)return showMsg('exp-msg','No data','err');const rows=[['Date','Staff','Login','Logout','Hours','Status']];app.records.forEach(r=>{const s=app.staff.find(x=>x.id===r.sid);const st=r.status?{rest:'Rest Day',absent:'Absent'}[r.status]:'-';if(s)rows.push([r.date,s.name,r.in||'-',r.out||'-',r.status?'-':calcH(r.in,r.out).toFixed(2),st]);});dl('\uFEFF'+rows.map(r=>r.map(c=>`"${c}"`).join(',')).join('\n'),'Records.csv','text/csv;charset=utf-8');showMsg('exp-msg','Downloaded!','ok');}
+        function expPay(){
+            if(!app.start||!app.end)return showMsg('exp-msg','Set dates','err');
+            const rows=[['Staff','Full Days','Undertime Days','Hours Worked','Hours Short','OT Hours','Regular Pay','Partial Pay','OT Pay','Gross','Deductions','Net']];
+            app.staff.forEach(s=>{
+                const recs=app.records.filter(r=>{const rd=new Date(r.date);return r.sid===s.id&&rd>=new Date(app.start)&&rd<=new Date(app.end);});
+                let fd=0,ud=0,uh=0,ph=0,oh=0;
+                recs.forEach(r=>{if(!r.status){const h=calcH(r.in,r.out);if(h>=app.settings.fullShiftHours){fd++;oh+=calcOT(r.out);}else if(h>0){ud++;ph+=h;uh+=(app.settings.fullShiftHours-h);}}});
+                const rt=RATES[s.position],hr=getHourlyRate(s.position);
+                const rp=roundUp(fd*rt.daily),pp=roundUp(ph*hr),op=roundUp(oh*rt.ot),gr=rp+pp+op;
+                const dip=app.deductions.filter(d=>{const dd=new Date(d.deductionDate);return d.staffId===s.id&&dd>=new Date(app.start)&&dd<=new Date(app.end)&&d.status==='pending';});
+                const td=roundUp(dip.reduce((sum,d)=>sum+d.amount,0));
+                rows.push([s.name,fd,ud,ph.toFixed(2),uh.toFixed(2),oh,rp,pp,op,gr,td,gr-td]);
+            });
+            dl('\uFEFF'+rows.map(r=>r.join(',')).join('\n'),'Payslip.csv','text/csv;charset=utf-8');showMsg('exp-msg','Downloaded!','ok');
+        }
+        function dl(content,filename,type){const b=new Blob([content],{type}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download=filename;a.click();URL.revokeObjectURL(u);}
+
+        // ═══════════════════════════════════════════════
+        // DEVICES
+        // ═══════════════════════════════════════════════
+        function renderDevices() {
+            if (!app.adminMode) return adminRequired();
+            const authed = authorizedDevices.some(d=>d.id===deviceId);
+            return `
+                <div class="page-title">🔐 Devices</div>
+                <div class="card">
+                    <div class="alert ${authed?'alert-green':'alert-red'}" style="margin-bottom:14px;">
+                        <strong>${authed?'✅ This device is authorized':'❌ This device is not authorized'}</strong><br>
+                        <small style="word-break:break-all;">ID: ${deviceId}</small>
+                    </div>
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                        <button class="btn-primary btn-sm" onclick="authDevice()">✅ Authorize This Device</button>
+                        <button class="btn-info btn-sm" onclick="loadAuthorizedDevices();render()">🔄 Refresh</button>
+                    </div>
+                </div>
+                <div style="font-size:13px;font-weight:700;color:var(--text-2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px;">Authorized Devices (${authorizedDevices.length})</div>
+                ${authorizedDevices.length===0?`<div class="card" style="text-align:center;color:var(--text-3);padding:32px;">No devices authorized</div>`:authorizedDevices.map(d=>{const isCur=d.id===deviceId;return`<div class="staff-item" style="${isCur?'border-left:4px solid var(--green);':''}">
+                    <div><div class="staff-name">${d.name||'Unnamed Device'}${isCur?` <span class="badge badge-green">This Device</span>`:''}</div><div class="staff-meta" style="font-size:11px;word-break:break-all;">Last active: ${d.lastActive?new Date(d.lastActive).toLocaleString():'Never'}</div></div>
+                    ${!isCur?`<button class="btn-danger btn-sm" onclick="removeDevice('${d.id}')">Remove</button>`:''}
+                </div>`;}).join('')}`;
+        }
+
+        function quickAuthDevice() {
+            const name=prompt('Name for this device (e.g., Front Desk, Pharmacy):');if(!name){alert('Device name required');return;}
+            const ex=authorizedDevices.find(d=>d.id===deviceId);if(ex){alert('Already authorized as: '+ex.name);return;}
+            authorizedDevices.push({id:deviceId,name,addedDate:new Date().toISOString(),lastActive:new Date().toISOString()});
+            saveAuthorizedDevices();render();
+        }
+        function authDevice(){
+            const name=prompt('Name for this device:');if(!name)return;
+            const ex=authorizedDevices.find(d=>d.id===deviceId);
+            if(ex){ex.name=name;ex.lastActive=new Date().toISOString();}else authorizedDevices.push({id:deviceId,name,addedDate:new Date().toISOString(),lastActive:new Date().toISOString()});
+            saveAuthorizedDevices();render();
+        }
+        function removeDevice(id){if(!confirm('Remove this device?'))return;authorizedDevices=authorizedDevices.filter(d=>d.id!==id);saveAuthorizedDevices();render();}
+
+        // ═══════════════════════════════════════════════
+        // FIREBASE
+        // ═══════════════════════════════════════════════
+        function renderFirebase() {
+            if (!app.adminMode) return adminRequired();
+            const ok=isFirebaseInitialized;
+            return `
+                <div class="page-title">🔥 Firebase</div>
+                <div class="alert ${ok?'alert-green':'alert-red'}"><strong>Status:</strong> ${ok?'✅ Connected':'❌ Not Connected'}<br><strong>Mode:</strong> ${ok?'Cloud Storage':'Local Storage Only'}${ok?`<br><small>${firebaseConfig.projectId}</small>`:''}</div>
+                ${ok?`<div class="card"><div class="section-title">🧪 Test Connection</div><button class="btn-primary btn-sm" onclick="testFirebase()">Run Test</button><div id="firebase-test-msg" class="msg" style="display:none;margin-top:12px;"></div></div>`:''}
+                <div class="card" style="border:2px solid var(--amber);">
+                    <div class="section-title" style="color:var(--red);">🗑️ Danger Zone</div>
+                    <p style="font-size:14px;color:var(--text-2);margin-bottom:14px;">Permanently delete all staff, attendance, and deduction data</p>
+                    <button class="btn-danger btn-sm" onclick="clearAllData()">⚠️ Delete All Data</button>
+                </div>`;
+        }
+
+        function testFirebase(){
+            if(!isFirebaseInitialized){showMsg('firebase-test-msg','❌ Not initialized','err');return;}
+            showMsg('firebase-test-msg','🔄 Testing...','ok');
+            db.ref('_test').set({test:true,ts:Date.now()}).then(()=>db.ref('_test').once('value')).then(s=>{if(s.val()&&s.val().test){showMsg('firebase-test-msg','✅ Connected! Read & write working.','ok');db.ref('_test').remove();}else showMsg('firebase-test-msg','⚠️ Write ok but read failed','err');}).catch(e=>showMsg('firebase-test-msg',`❌ ${e.message}`,'err'));
+        }
+
+        function clearAllData(){
+            if(!confirm('⚠️ DELETE ALL DATA?\n\nThis permanently deletes everything.\n\nThis cannot be undone!'))return;
+            if(!confirm('Are you absolutely sure?'))return;
+            if(prompt('Type DELETE to confirm:')!=='DELETE'){alert('Cancelled.');return;}
+            app.staff=[];app.records=[];app.deductions=[];
+            if(isFirebaseInitialized){db.ref().set({staff:[],records:[],deductions:[],settings:app.settings}).then(()=>{['staff','records','deductions'].forEach(k=>localStorage.removeItem(k));alert('✅ All data cleared.');nav('clock');});}
+            else{['staff','records','deductions'].forEach(k=>localStorage.removeItem(k));alert('✅ All data cleared.');nav('clock');}
+        }
+
+        // ═══════════════════════════════════════════════
+        // SETTINGS
+        // ═══════════════════════════════════════════════
+        function renderSettings() {
+            if (!app.adminMode) return adminRequired();
+            const tg=app.settings.telegram, dn=localStorage.getItem('deviceName')||'';
+            const cl=(app.settings.clockOutChecklist||DEFAULT_CLOCKOUT_CHECKLIST).join('\n');
+            const fr=app.settings.clockOutFarewell||DEFAULT_CLOCKOUT_FAREWELL;
+            return `
+                <div class="page-title">⚙️ Settings</div>
+
+                <!-- Clock-Out Checklist -->
+                <div class="card">
+                    <div class="section-title">🌙 Clock-Out Checklist</div>
+                    <div class="alert alert-green" style="margin-bottom:14px;"><strong>💡 Tip:</strong> Each line below becomes one checklist item shown when employees clock out.</div>
+                    <div class="form-group" style="margin-bottom:12px;"><label>Checklist Items <span style="font-weight:400;color:var(--text-3)">(one per line)</span></label><textarea id="clockout-checklist-input" rows="6">${cl}</textarea></div>
+                    <div class="form-group" style="margin-bottom:14px;"><label>Farewell Message</label><input type="text" id="clockout-farewell-input" value="${fr}"></div>
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                        <button class="btn-primary btn-sm" onclick="saveClockoutMessage()">💾 Save</button>
+                        <button class="btn-info btn-sm" onclick="previewClockoutModal()">👁️ Preview</button>
+                        <button class="btn-muted btn-sm" onclick="resetClockoutMessage()">↩️ Reset</button>
+                    </div>
+                    <div id="clockout-settings-msg" class="msg" style="display:none;margin-top:12px;"></div>
+                </div>
+
+                <!-- Install Instructions -->
+                <div class="card" style="border:2px solid var(--blue);">
+                    <div class="section-title" style="color:var(--blue);">📱 Add to iPhone Home Screen</div>
+                    <ol style="font-size:14px;color:var(--text-2);line-height:2;padding-left:20px;">
+                        <li>Open this page in <strong>Safari</strong> on your iPhone</li>
+                        <li>Tap the <strong>Share</strong> button <span style="background:var(--surface-3);padding:2px 8px;border-radius:4px;">⬆️</span> at the bottom</li>
+                        <li>Scroll down and tap <strong>"Add to Home Screen"</strong></li>
+                        <li>Tap <strong>"Add"</strong> — done! 🎉</li>
+                    </ol>
+                    <div class="alert alert-blue" style="margin-top:12px;"><strong>Note:</strong> Use Safari only — Chrome and other browsers don't support this on iPhone.</div>
+                </div>
+
+                <!-- Security -->
+                <div class="card">
+                    <div class="section-title">🔒 Admin Password</div>
+                    <div class="form-grid" style="margin-bottom:14px;">
+                        <div class="form-group"><label>Current Password</label><input type="password" id="current-password" autocomplete="current-password"></div>
+                        <div class="form-group"><label>New Password</label><input type="password" id="new-password" autocomplete="new-password"></div>
+                        <div class="form-group"><label>Confirm New Password</label><input type="password" id="confirm-password" autocomplete="new-password"></div>
+                    </div>
+                    <button class="btn-danger btn-sm" onclick="changeAdminPassword()">🔐 Change Password</button>
+                    <div id="password-msg" class="msg" style="display:none;margin-top:12px;"></div>
+                </div>
+
+                <!-- Payroll -->
+                <div class="card">
+                    <div class="section-title">⏰ Payroll Settings</div>
+                    <div class="form-group" style="margin-bottom:14px;"><label>Full Shift Hours (Default: 9.5)</label><input type="number" id="full-shift-hours" step="0.5" min="1" max="24" value="${app.settings.fullShiftHours}" inputmode="decimal"></div>
+                    <button class="btn-primary btn-sm" onclick="savePayrollSettings()">💾 Save</button>
+                    <div id="payroll-msg" class="msg" style="display:none;margin-top:12px;"></div>
+                </div>
+
+                <!-- Device Name -->
+                <div class="card">
+                    <div class="section-title">📱 Device Name</div>
+                    <div class="form-group" style="margin-bottom:14px;"><label>Name (appears in Telegram notifications)</label><input type="text" id="device-name" value="${dn}" placeholder="e.g., Front Desk, Pharmacy Counter" autocorrect="off"></div>
+                    <button class="btn-primary btn-sm" onclick="saveDeviceName()">💾 Save</button>
+                    <div id="device-msg" class="msg" style="display:none;margin-top:12px;"></div>
+                </div>
+
+                <!-- Telegram -->
+                <div class="card">
+                    <div class="section-title">📬 Telegram Notifications</div>
+                    <div class="form-group" style="margin-bottom:14px;">
+                        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+                            <input type="checkbox" id="telegram-enabled" ${tg.enabled?'checked':''} onchange="toggleTelegramNotifications(this.checked)" style="width:20px;height:20px;flex-shrink:0;">
+                            <span>Enable Telegram Notifications</span>
+                        </label>
+                    </div>
+                    <div id="telegram-config" style="${tg.enabled?'':'opacity:.5;pointer-events:none;'}">
+                        <div class="form-grid" style="margin-bottom:14px;">
+                            <div class="form-group"><label>Bot Token</label><input type="text" id="telegram-token" value="${tg.botToken}" placeholder="123456789:ABC..." autocomplete="off" autocorrect="off"></div>
+                            <div class="form-group"><label>Chat ID</label><input type="text" id="telegram-chatid" value="${tg.chatId}" placeholder="123456789" inputmode="numeric"></div>
                         </div>
-                    `;
-                    
-                    photosDiv.appendChild(photoItem);
-                }
-            });
+                        <div style="display:grid;gap:8px;margin-bottom:14px;">
+                            ${['clockIn:🟢 Clock In','clockOut:🔴 Clock Out','newDeduction:💸 New Deduction'].map(x=>{const[k,label]=x.split(':');return`<label style="display:flex;align-items:center;gap:10px;padding:12px;background:var(--surface-2);border-radius:var(--radius-sm);cursor:pointer;"><input type="checkbox" id="notif-${k.toLowerCase().replace('n','')}" ${tg.notifications[k]?'checked':''} style="width:20px;height:20px;flex-shrink:0;"><span>${label}</span></label>`;}).join('')}
+                            <label style="display:flex;align-items:center;gap:10px;padding:12px;background:var(--surface-2);border-radius:var(--radius-sm);cursor:pointer;"><input type="checkbox" id="notif-clockin" ${tg.notifications.clockIn?'checked':''} style="width:20px;height:20px;flex-shrink:0;" hidden><span></span></label>
+                        </div>
+                        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                            <button class="btn-primary btn-sm" onclick="saveTelegramSettings()">💾 Save</button>
+                            <button class="btn-info btn-sm" onclick="testTelegramNotification()">📤 Test</button>
+                        </div>
+                        <div id="telegram-msg" class="msg" style="display:none;margin-top:12px;"></div>
+                    </div>
+                </div>`;
         }
 
-        function downloadRemotePhoto(imageData) {
-            const link = document.createElement('a');
-            link.download = `remote_photo_${Date.now()}.jpg`;
-            link.href = imageData;
-            link.click();
+        // Settings helpers
+        function saveClockoutMessage() {
+            const raw=document.getElementById('clockout-checklist-input').value, fare=document.getElementById('clockout-farewell-input').value.trim();
+            const items=raw.split('\n').map(l=>l.trim()).filter(l=>l.length>0);
+            if(items.length===0) return showMsg('clockout-settings-msg','❌ Add at least one item','err');
+            if(!fare) return showMsg('clockout-settings-msg','❌ Add a farewell message','err');
+            app.settings.clockOutChecklist=items; app.settings.clockOutFarewell=fare;
+            saveData(); showMsg('clockout-settings-msg','✅ Checklist saved!','ok');
+        }
+        function previewClockoutModal() {
+            const raw=document.getElementById('clockout-checklist-input').value, fare=document.getElementById('clockout-farewell-input').value.trim();
+            const items=raw.split('\n').map(l=>l.trim()).filter(l=>l.length>0);
+            document.getElementById('clockout-checklist-display').innerHTML=items.map(i=>`<li><span class="check-icon">☑️</span><span>${i}</span></li>`).join('');
+            document.getElementById('clockout-farewell-display').textContent=fare||DEFAULT_CLOCKOUT_FAREWELL;
+            document.getElementById('clockout-modal').style.display='flex';
+        }
+        function resetClockoutMessage() {
+            if(!confirm('Reset to default?'))return;
+            app.settings.clockOutChecklist=DEFAULT_CLOCKOUT_CHECKLIST; app.settings.clockOutFarewell=DEFAULT_CLOCKOUT_FAREWELL;
+            saveData(); render();
+        }
+        function savePayrollSettings() {
+            const h=parseFloat(document.getElementById('full-shift-hours').value);
+            if(!h||h<1||h>24) return showMsg('payroll-msg','❌ Enter a valid value (1–24)','err');
+            app.settings.fullShiftHours=h; saveData(); showMsg('payroll-msg',`✅ Set to ${h} hours`,'ok');
+        }
+        function saveDeviceName() {
+            const n=document.getElementById('device-name').value.trim();
+            if(!n) return showMsg('device-msg','❌ Enter a device name','err');
+            localStorage.setItem('deviceName',n); showMsg('device-msg','✅ Saved','ok');
+        }
+        function changeAdminPassword() {
+            const cp=document.getElementById('current-password').value, np=document.getElementById('new-password').value, cf=document.getElementById('confirm-password').value;
+            if(!cp||!np||!cf) return showMsg('password-msg','❌ Fill all fields','err');
+            if(cp!==app.settings.adminPassword) return showMsg('password-msg','❌ Current password incorrect','err');
+            if(np.length<6) return showMsg('password-msg','❌ Min 6 characters','err');
+            if(np!==cf) return showMsg('password-msg','❌ Passwords do not match','err');
+            app.settings.adminPassword=np; saveData();
+            ['current-password','new-password','confirm-password'].forEach(id=>document.getElementById(id).value='');
+            showMsg('password-msg','✅ Password changed!','ok');
+            setTimeout(()=>{alert('Password changed! You will be logged out.');app.adminMode=false;app.view='clock';render();},2000);
+        }
+        function toggleTelegramNotifications(en) { const c=document.getElementById('telegram-config'); c.style.opacity=en?'1':'0.5'; c.style.pointerEvents=en?'auto':'none'; }
+        function saveTelegramSettings() {
+            const en=document.getElementById('telegram-enabled').checked, bt=document.getElementById('telegram-token').value.trim(), ci=document.getElementById('telegram-chatid').value.trim();
+            if(en&&(!bt||!ci)) return showMsg('telegram-msg','❌ Enter Bot Token and Chat ID','err');
+            app.settings.telegram={enabled:en,botToken:bt,chatId:ci,notifications:{clockIn:document.getElementById('notif-clockin')?.checked||true,clockOut:document.getElementById('notif-clockout')?.checked||true,newDeduction:document.getElementById('notif-deduction')?.checked||true,payrollGenerated:false}};
+            saveData(); showMsg('telegram-msg','✅ Saved!','ok');
+        }
+        async function sendTelegramNotification(msg) {
+            if(!app.settings.telegram.enabled)return;
+            const{botToken,chatId}=app.settings.telegram;if(!botToken||!chatId)return;
+            try{await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:chatId,text:msg,parse_mode:'HTML'})});}catch(e){}
+        }
+        async function testTelegramNotification() {
+            const bt=document.getElementById('telegram-token').value.trim(), ci=document.getElementById('telegram-chatid').value.trim();
+            if(!bt||!ci) return showMsg('telegram-msg','❌ Enter both values first','err');
+            showMsg('telegram-msg','📤 Sending...','ok');
+            try{const r=await fetch(`https://api.telegram.org/bot${bt}/sendMessage`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:ci,text:'🧪 <b>Test</b>\n\n✅ Telegram notifications are working!',parse_mode:'HTML'})});const d=await r.json();if(d.ok)showMsg('telegram-msg','✅ Sent! Check Telegram.','ok');else showMsg('telegram-msg',`❌ ${d.description}`,'err');}catch(e){showMsg('telegram-msg',`❌ ${e.message}`,'err');}
         }
 
-        function updateRemoteStatus(message, isError = false) {
-            const statusDiv = document.getElementById('remoteStatusMsg');
-            statusDiv.textContent = message;
-            statusDiv.className = isError ? 'status error' : 'status success';
+        // Manual entry helpers
+        function clearManualForm() {
+            ['manual-staff','manual-login','manual-logout','manual-status','manual-notes'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+            const d=document.getElementById('manual-date');if(d)d.value=today();
+            const m=document.getElementById('manual-msg');if(m)m.style.display='none';
         }
-
-        // Mode switching
-        function switchMode(mode) {
-            document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
-            document.querySelectorAll('.mode-section').forEach(section => section.classList.remove('active'));
-            
-            if (mode === 'camera') {
-                document.querySelector('.mode-btn:first-child').classList.add('active');
-                document.getElementById('cameraMode').classList.add('active');
-            } else {
-                document.querySelector('.mode-btn:last-child').classList.add('active');
-                document.getElementById('remoteMode').classList.add('active');
+        function addManualEntry() {
+            const sid=document.getElementById('manual-staff').value, date=document.getElementById('manual-date').value;
+            const li=document.getElementById('manual-login').value, lo=document.getElementById('manual-logout').value;
+            const status=document.getElementById('manual-status').value, notes=document.getElementById('manual-notes').value;
+            if(!sid) return showMsg('manual-msg','❌ Select staff','err');
+            if(!date) return showMsg('manual-msg','❌ Select a date','err');
+            const ex=app.records.find(r=>r.sid===sid&&r.date===date);
+            if(status&&(status==='rest'||status==='absent')){
+                if(ex){if(!confirm('Record exists. Overwrite?'))return;ex.status=status;ex.in=null;ex.out=null;ex.notes=notes||'Manually set';}
+                else app.records.push({id:Date.now(),sid,date,in:null,out:null,status,notes:notes||'Manually set'});
+                saveData();showMsg('manual-msg','✅ Status recorded!','ok');clearManualForm();render();return;
             }
+            if(!li&&!lo) return showMsg('manual-msg','❌ Enter at least one time','err');
+            if(li&&lo){const lim=parseInt(li.split(':')[0])*60+parseInt(li.split(':')[1]),lom=parseInt(lo.split(':')[0])*60+parseInt(lo.split(':')[1]);if(lom<=lim)return showMsg('manual-msg','❌ Logout must be after login','err');}
+            if(ex){if(!confirm('Record exists. Overwrite?'))return;if(li)ex.in=li;if(lo)ex.out=lo;ex.status=status||null;ex.notes=notes||'Edited';showMsg('manual-msg','✅ Updated!','ok');}
+            else{app.records.push({id:Date.now(),sid,date,in:li||null,out:lo||null,status:status||null,notes:notes||'Manually added'});showMsg('manual-msg','✅ Added!','ok');}
+            saveData();clearManualForm();render();
         }
 
-        // Event listeners
-        startBtn.addEventListener('click', () => {
-            if (stream) {
-                stopCamera();
-            } else {
-                startCamera();
-            }
+        // ═══════════════════════════════════════════════
+        // KEYBOARD / INIT
+        // ═══════════════════════════════════════════════
+        document.addEventListener('DOMContentLoaded', () => {
+            const p=document.getElementById('admin-password');
+            if(p) p.addEventListener('keypress', e=>{if(e.key==='Enter')verifyPassword();});
         });
 
-        captureBtn.addEventListener('click', capturePhoto);
-        switchBtn.addEventListener('click', switchCamera);
+        loadData();
+        loadAuthorizedDevices();
+        render();
+        updateAdminStatus();
+        updateDeviceActivity();
 
-        // Initialize on load
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-            updateCameraStatus('Error: Camera API not supported', true);
-            startBtn.disabled = true;
-        } else {
-            initializeCameraSession();
-        }
-
-        // Cleanup on unload
-        window.addEventListener('beforeunload', () => {
-            if (commandCheckInterval) clearInterval(commandCheckInterval);
-            if (photoCheckInterval) clearInterval(photoCheckInterval);
-        });
+        // Clock ticker & midnight refresh
+        let lastDate = today();
+        setInterval(() => {
+            const now = new Date(), cur = today();
+            const el = document.getElementById('hero-time');
+            if (el) el.textContent = now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+            const del = document.getElementById('hero-date');
+            if (del) del.textContent = now.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+            if (cur !== lastDate) { lastDate=cur; render(); }
+        }, 1000);
     </script>
 </body>
 </html>

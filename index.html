@@ -54,12 +54,10 @@
             --shadow-sm:  0 1px 3px rgba(0,0,0,.08);
             --shadow:     0 4px 16px rgba(0,0,0,.10);
             --shadow-lg:  0 12px 40px rgba(0,0,0,.16);
-            /* iPhone safe areas */
             --safe-top:    env(safe-area-inset-top, 0px);
             --safe-bottom: env(safe-area-inset-bottom, 0px);
             --safe-left:   env(safe-area-inset-left, 0px);
             --safe-right:  env(safe-area-inset-right, 0px);
-            /* Bottom nav height + safe area */
             --nav-h: calc(62px + var(--safe-bottom));
         }
 
@@ -77,7 +75,7 @@
             padding: 12px 14px;
             border: 1.5px solid var(--border);
             border-radius: var(--radius-sm);
-            font-size: 16px; /* prevents iOS zoom */
+            font-size: 16px;
             background: var(--surface);
             color: var(--text-1);
             width: 100%;
@@ -366,6 +364,59 @@
         .modal-title { font-size: 18px; font-weight: 800; color: var(--text-1); margin-bottom: 8px; }
 
         /* ═══════════════════════════════════════════════
+           CAMERA MODAL
+        ═══════════════════════════════════════════════ */
+        .camera-modal-content {
+            background: var(--surface);
+            border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+            width: 100%;
+            max-width: 480px;
+            overflow: hidden;
+            animation: slideUp .3s cubic-bezier(.34,1.56,.64,1);
+            padding-bottom: var(--safe-bottom);
+        }
+        .camera-header {
+            background: linear-gradient(135deg, var(--navy) 0%, #1e3a5f 100%);
+            padding: 20px 24px 16px;
+            text-align: center;
+            color: white;
+        }
+        .camera-header .store-label { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; opacity: .6; margin-bottom: 4px; }
+        .camera-header h2 { font-size: 19px; font-weight: 800; }
+        .camera-body { padding: 16px 16px 8px; }
+        #camera-video {
+            width: 100%;
+            border-radius: var(--radius);
+            background: #000;
+            display: block;
+            max-height: 300px;
+            object-fit: cover;
+        }
+        #camera-preview {
+            width: 100%;
+            border-radius: var(--radius);
+            display: none;
+            max-height: 300px;
+            object-fit: cover;
+        }
+        #camera-canvas { display: none; }
+        .camera-caption-box {
+            background: linear-gradient(135deg, #eff6ff, #f0fdf4);
+            border-radius: var(--radius-sm);
+            padding: 12px 16px;
+            margin-top: 12px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--navy);
+            border: 1px solid #dbeafe;
+            display: none;
+        }
+        .camera-caption-box .caption-emoji { font-size: 20px; margin-bottom: 4px; }
+        .camera-footer { padding: 12px 16px 16px; display: flex; gap: 10px; flex-wrap: wrap; }
+        .camera-footer button { flex: 1; padding: 14px; font-size: 14px; font-weight: 700; border-radius: var(--radius); min-width: 100px; }
+
+        /* ═══════════════════════════════════════════════
            CLOCK-OUT CHECKLIST MODAL
         ═══════════════════════════════════════════════ */
         .clockout-modal-content {
@@ -376,6 +427,8 @@
             overflow: hidden;
             animation: slideUp .3s cubic-bezier(.34,1.56,.64,1);
             padding-bottom: var(--safe-bottom);
+            max-height: 92vh;
+            overflow-y: auto;
         }
         .clockout-header {
             background: linear-gradient(135deg, var(--navy) 0%, #2e4a7a 100%);
@@ -385,6 +438,31 @@
         }
         .clockout-header .store-name { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; opacity: .6; margin-bottom: 6px; }
         .clockout-header h2 { font-size: 20px; font-weight: 800; color: white; border: none; padding: 0; margin: 0; }
+        /* Photo strip inside clock-out modal */
+        .clockout-photo-strip {
+            display: none;
+            margin: 0;
+            position: relative;
+            background: #000;
+        }
+        .clockout-photo-strip img {
+            width: 100%;
+            max-height: 220px;
+            object-fit: cover;
+            display: block;
+            opacity: .92;
+        }
+        .clockout-photo-strip .photo-caption-overlay {
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            background: linear-gradient(transparent, rgba(0,0,0,.72));
+            padding: 18px 16px 12px;
+            color: white;
+            font-size: 13px;
+            font-weight: 600;
+            text-align: center;
+            letter-spacing: .3px;
+        }
         .clockout-body { padding: 20px 20px 4px; }
         .checklist-items { list-style: none; margin: 0 0 16px; padding: 0; }
         .checklist-items li { display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; border-radius: var(--radius-sm); margin-bottom: 8px; background: var(--surface-2); border-left: 3px solid var(--blue); font-size: 14px; color: var(--text-1); line-height: 1.4; }
@@ -421,7 +499,7 @@
         .install-banner .close-banner { background: none; border: none; color: rgba(255,255,255,.6); font-size: 20px; padding: 0; margin-left: auto; cursor: pointer; }
 
         /* ═══════════════════════════════════════════════
-           TODAY ACTIVITY CARDS (mobile-friendly alternative)
+           TODAY ACTIVITY CARDS
         ═══════════════════════════════════════════════ */
         .activity-card { background: var(--surface-2); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 8px; border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
         .activity-card .name { font-weight: 700; font-size: 14px; color: var(--text-1); }
@@ -538,12 +616,48 @@
         </div>
     </div>
 
+    <!-- ─── CAMERA MODAL ─────────────────────────────────────── -->
+    <div id="camera-modal" class="modal" style="display:none;">
+        <div class="camera-modal-content">
+            <div class="camera-header">
+                <div class="store-label">Sir Ramos Drugstore</div>
+                <h2>📸 Say Cheese!</h2>
+            </div>
+            <div class="camera-body">
+                <video id="camera-video" autoplay playsinline muted></video>
+                <canvas id="camera-canvas"></canvas>
+                <img id="camera-preview" alt="Your photo">
+                <div class="camera-caption-box" id="camera-caption-box">
+                    <div class="caption-emoji" id="caption-emoji">✨</div>
+                    <div id="camera-caption-text"></div>
+                </div>
+                <div id="camera-error" style="display:none;margin-top:12px;padding:12px;background:#fef2f2;color:#991b1b;border-radius:var(--radius-sm);font-size:13px;text-align:center;">
+                    📷 Camera not available — you can still clock in without a photo.
+                </div>
+            </div>
+            <div class="camera-footer" id="camera-footer-default">
+                <button style="background:var(--surface-3);color:var(--text-2);" onclick="closeCameraModal()">✕ Cancel</button>
+                <button class="btn-info" onclick="capturePhoto()" id="capture-btn">📸 Take Photo</button>
+                <button class="btn-muted" onclick="skipPhotoAndClockIn()" id="skip-btn">Skip →</button>
+            </div>
+            <div class="camera-footer" id="camera-footer-preview" style="display:none;">
+                <button style="background:var(--surface-3);color:var(--text-2);" onclick="retakePhoto()">🔄 Retake</button>
+                <button class="btn-primary" onclick="confirmClockInWithPhoto()">✅ Clock In!</button>
+            </div>
+        </div>
+    </div>
+
     <!-- ─── CLOCK-OUT CHECKLIST MODAL ───────────────────────── -->
     <div id="clockout-modal" class="modal" style="display:none;">
         <div class="clockout-modal-content">
             <div class="clockout-header">
                 <div class="store-name">Sir Ramos Drugstore</div>
                 <h2>🌙 Before You Leave</h2>
+            </div>
+            <!-- Photo strip (shown if photo was taken at clock-in) -->
+            <div class="clockout-photo-strip" id="clockout-photo-strip">
+                <img id="clockout-photo-img" alt="Clock-in photo">
+                <div class="photo-caption-overlay" id="clockout-photo-caption"></div>
             </div>
             <div class="clockout-body">
                 <ul class="checklist-items" id="clockout-checklist-display"></ul>
@@ -590,6 +704,67 @@
         }
         const deviceId = getDeviceId();
         let authorizedDevices = [];
+
+        // ═══════════════════════════════════════════════
+        // RANDOM CAPTIONS
+        // ═══════════════════════════════════════════════
+        const CAPTIONS = [
+            { emoji: '☀️', text: 'A brand new day full of possibilities — let\'s make it count!' },
+            { emoji: '🌟', text: 'You showed up, and that already makes you a star!' },
+            { emoji: '💪', text: 'Champions clock in every single day. That\'s you!' },
+            { emoji: '🌺', text: 'Bloom where you\'re planted — today is your garden!' },
+            { emoji: '🚀', text: 'Ready for launch! This shift is going to be amazing.' },
+            { emoji: '🎯', text: 'Focused, fierce, and absolutely fabulous — that\'s you!' },
+            { emoji: '🌈', text: 'Every shift is a fresh canvas. Paint it beautifully!' },
+            { emoji: '✨', text: 'Sparkle on! Your energy lights up the whole store.' },
+            { emoji: '🏆', text: 'Another day, another chance to be your best self!' },
+            { emoji: '🌻', text: 'Sunshine brought you here. Go spread some of your own!' },
+            { emoji: '💫', text: 'You\'re not just an employee — you\'re the heart of this team!' },
+            { emoji: '🎶', text: 'Work hard, smile bigger. Today\'s gonna be a good one!' },
+            { emoji: '🌊', text: 'Ride the day like a wave — smooth, strong, unstoppable!' },
+            { emoji: '🦋', text: 'Every morning is a fresh start. You\'ve got this!' },
+            { emoji: '🍀', text: 'Lucky day to be alive and working with wonderful people!' },
+            { emoji: '🎉', text: 'You bring the good vibes wherever you go. Thank you!' },
+            { emoji: '💎', text: 'Rare, brilliant, and irreplaceable — just like you!' },
+            { emoji: '🌙', text: 'Even on tough days, your smile makes all the difference.' },
+            { emoji: '🔥', text: 'Passion in your heart, dedication in your hands — unstoppable!' },
+            { emoji: '🌸', text: 'Your kindness and hard work don\'t go unnoticed. Ever.' },
+            { emoji: '⚡', text: 'Electric energy, great attitude — today\'s shift is yours!' },
+            { emoji: '🎵', text: 'Work like the playlist is fire and the coffee is perfect.' },
+            { emoji: '🍵', text: 'Deep breaths, warm heart — you were made for this!' },
+            { emoji: '🌍', text: 'Small acts of care today change someone\'s whole world.' },
+            { emoji: '🎈', text: 'Life\'s too short not to enjoy the work you do. Enjoy today!'}
+        ];
+
+        function getRandomCaption() {
+            return CAPTIONS[Math.floor(Math.random() * CAPTIONS.length)];
+        }
+
+        // ═══════════════════════════════════════════════
+        // CAMERA STATE
+        // ═══════════════════════════════════════════════
+        let cameraStream = null;
+        let capturedPhotoData = null;    // base64 of current capture
+        let capturedCaption = null;      // {emoji, text}
+        let pendingClockInData = null;   // {sid, pin, staffObj} while camera is open
+
+        function getPhotoKey(sid, date) { return `photo_${sid}_${date}`; }
+        function getCaptionKey(sid, date) { return `caption_${sid}_${date}`; }
+
+        function savePhoto(sid, date, photoData, caption) {
+            try {
+                localStorage.setItem(getPhotoKey(sid, date), photoData);
+                localStorage.setItem(getCaptionKey(sid, date), JSON.stringify(caption));
+            } catch(e) {
+                // localStorage might be full (photos are large) — silently ignore
+            }
+        }
+        function loadPhoto(sid, date) {
+            return localStorage.getItem(getPhotoKey(sid, date));
+        }
+        function loadCaption(sid, date) {
+            try { return JSON.parse(localStorage.getItem(getCaptionKey(sid, date))); } catch(e) { return null; }
+        }
 
         // ═══════════════════════════════════════════════
         // APP STATE & CONSTANTS
@@ -752,10 +927,8 @@
             }
             document.getElementById('bottom-nav-inner').innerHTML = navHTML;
 
-            // Admin status sidebar
             updateAdminStatus();
 
-            // Page content
             const views = { clock: renderClock, view: renderView, payroll: renderPayroll, deductions: renderDeductions, staff: renderStaff, export: renderExport, devices: renderDevices, firebase: renderFirebase, settings: renderSettings };
             document.getElementById('view').innerHTML = views[app.view] ? views[app.view]() : '';
         }
@@ -826,11 +999,153 @@
         function adminRequired() { return `<div style="text-align:center;padding:60px 20px;"><div style="font-size:56px;margin-bottom:16px;">🔒</div><div style="font-size:20px;font-weight:800;color:var(--text-1);margin-bottom:8px;">Admin Access Required</div><p style="color:var(--text-2);margin-bottom:24px;font-size:15px;">Login to view this section</p><button class="btn-primary" onclick="showAdminLogin()" style="padding:14px 32px;">Login as Admin</button></div>`; }
 
         // ═══════════════════════════════════════════════
+        // CAMERA FUNCTIONS
+        // ═══════════════════════════════════════════════
+        async function openCameraModal(sid, staffObj) {
+            pendingClockInData = { sid, staffObj };
+            capturedPhotoData = null;
+            capturedCaption = null;
+
+            const modal = document.getElementById('camera-modal');
+            const video = document.getElementById('camera-video');
+            const preview = document.getElementById('camera-preview');
+            const captionBox = document.getElementById('camera-caption-box');
+            const errorDiv = document.getElementById('camera-error');
+            const footerDefault = document.getElementById('camera-footer-default');
+            const footerPreview = document.getElementById('camera-footer-preview');
+
+            // Reset UI
+            video.style.display = 'block';
+            preview.style.display = 'none';
+            captionBox.style.display = 'none';
+            errorDiv.style.display = 'none';
+            footerDefault.style.display = 'flex';
+            footerPreview.style.display = 'none';
+            modal.style.display = 'flex';
+
+            try {
+                cameraStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
+                    audio: false
+                });
+                video.srcObject = cameraStream;
+            } catch(e) {
+                // Camera not available
+                video.style.display = 'none';
+                errorDiv.style.display = 'block';
+                document.getElementById('capture-btn').style.display = 'none';
+            }
+        }
+
+        function capturePhoto() {
+            const video = document.getElementById('camera-video');
+            const canvas = document.getElementById('camera-canvas');
+            const preview = document.getElementById('camera-preview');
+            const captionBox = document.getElementById('camera-caption-box');
+            const footerDefault = document.getElementById('camera-footer-default');
+            const footerPreview = document.getElementById('camera-footer-preview');
+
+            if (!cameraStream) return;
+
+            // Draw frame to canvas
+            canvas.width = video.videoWidth || 640;
+            canvas.height = video.videoHeight || 480;
+            const ctx = canvas.getContext('2d');
+            ctx.save();
+            // Mirror horizontally (selfie-style)
+            ctx.translate(canvas.width, 0);
+            ctx.scale(-1, 1);
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            ctx.restore();
+
+            capturedPhotoData = canvas.toDataURL('image/jpeg', 0.7);
+            capturedCaption = getRandomCaption();
+
+            // Show preview
+            preview.src = capturedPhotoData;
+            video.style.display = 'none';
+            preview.style.display = 'block';
+
+            // Show caption
+            document.getElementById('caption-emoji').textContent = capturedCaption.emoji;
+            document.getElementById('camera-caption-text').textContent = capturedCaption.text;
+            captionBox.style.display = 'block';
+
+            footerDefault.style.display = 'none';
+            footerPreview.style.display = 'flex';
+
+            stopCameraStream();
+        }
+
+        function retakePhoto() {
+            const video = document.getElementById('camera-video');
+            const preview = document.getElementById('camera-preview');
+            const captionBox = document.getElementById('camera-caption-box');
+            const footerDefault = document.getElementById('camera-footer-default');
+            const footerPreview = document.getElementById('camera-footer-preview');
+            const captureBtn = document.getElementById('capture-btn');
+
+            capturedPhotoData = null;
+            capturedCaption = null;
+
+            preview.style.display = 'none';
+            captionBox.style.display = 'none';
+            footerDefault.style.display = 'flex';
+            footerPreview.style.display = 'none';
+            captureBtn.style.display = '';
+
+            // Restart camera
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false })
+                .then(stream => {
+                    cameraStream = stream;
+                    video.srcObject = stream;
+                    video.style.display = 'block';
+                }).catch(() => {});
+        }
+
+        function stopCameraStream() {
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(t => t.stop());
+                cameraStream = null;
+            }
+        }
+
+        function closeCameraModal() {
+            stopCameraStream();
+            document.getElementById('camera-modal').style.display = 'none';
+            document.getElementById('capture-btn').style.display = '';
+            pendingClockInData = null;
+            capturedPhotoData = null;
+            capturedCaption = null;
+        }
+
+        function skipPhotoAndClockIn() {
+            stopCameraStream();
+            document.getElementById('camera-modal').style.display = 'none';
+            document.getElementById('capture-btn').style.display = '';
+            if (pendingClockInData) {
+                doClockIn(pendingClockInData.sid, pendingClockInData.staffObj, null, null);
+                pendingClockInData = null;
+            }
+        }
+
+        function confirmClockInWithPhoto() {
+            stopCameraStream();
+            document.getElementById('camera-modal').style.display = 'none';
+            document.getElementById('capture-btn').style.display = '';
+            if (pendingClockInData) {
+                doClockIn(pendingClockInData.sid, pendingClockInData.staffObj, capturedPhotoData, capturedCaption);
+                pendingClockInData = null;
+            }
+            capturedPhotoData = null;
+            capturedCaption = null;
+        }
+
+        // ═══════════════════════════════════════════════
         // CLOCK VIEW
         // ═══════════════════════════════════════════════
         function renderClock() {
             const now = new Date(), td = today();
-            const todayRecs = app.records.filter(r => r.date === td);
             return `
                 ${!authorizedDevices.some(d=>d.id===deviceId) ? `
                     <div class="install-banner" style="display:flex;">
@@ -900,9 +1215,24 @@
             if (!s||s.pin!==pin) return showMsg('clock-msg','Invalid PIN','err');
             const td=today(), existing=app.records.find(r=>r.sid==sid&&r.date===td);
             if (existing&&existing.in&&!existing.status) return showMsg('clock-msg','Already clocked in today','err');
-            const time=fmtTime(new Date());
+
+            // Open camera modal — actual clock-in happens after photo
+            openCameraModal(sid, s);
+        }
+
+        // Separated: actual clock-in logic (called after camera)
+        function doClockIn(sid, s, photoData, captionObj) {
+            const td = today(), existing = app.records.find(r=>r.sid==sid&&r.date===td);
+            const time = fmtTime(new Date());
+
             if (existing) { existing.in=time; existing.out=null; existing.status=null; }
-            else app.records.push({sid,date:td,in:time,out:null,status:null});
+            else app.records.push({sid, date:td, in:time, out:null, status:null});
+
+            // Save photo + caption to localStorage (not Firebase, to avoid size issues)
+            if (photoData) {
+                savePhoto(sid, td, photoData, captionObj);
+            }
+
             const lt=new Date('2000-01-01 '+time), ct=new Date('2000-01-01 07:35:00');
             let lateMsg='';
             if (lt>ct) {
@@ -913,6 +1243,7 @@
                     lateMsg=` ⚠️ Late ${lm} min – ₱${ld} deducted`;
                 } else lateMsg=' ⚠️ Late (deduction already recorded)';
             }
+
             saveData();
             showMsg('clock-msg',`✅ ${s.name} clocked in at ${time}${lateMsg}`, lateMsg?'err':'ok');
             document.getElementById('pin-inp').value='';
@@ -931,16 +1262,38 @@
             if (rec.out) return showMsg('clock-msg','Already clocked out today','err');
             if (rec.status) return showMsg('clock-msg','Cannot clock out – marked as '+rec.status,'err');
             pendingClockOut = {sid, pin};
-            showClockoutModal();
+            showClockoutModal(sid, td);
         }
 
-        function showClockoutModal() {
+        function showClockoutModal(sid, dateStr) {
             const list=app.settings.clockOutChecklist||DEFAULT_CLOCKOUT_CHECKLIST, fare=app.settings.clockOutFarewell||DEFAULT_CLOCKOUT_FAREWELL;
             document.getElementById('clockout-checklist-display').innerHTML=list.map(i=>`<li><span class="check-icon">☑️</span><span>${i}</span></li>`).join('');
             document.getElementById('clockout-farewell-display').textContent=fare;
+
+            // Load photo if available
+            const photoStrip = document.getElementById('clockout-photo-strip');
+            const photoImg = document.getElementById('clockout-photo-img');
+            const photoCaptionEl = document.getElementById('clockout-photo-caption');
+
+            if (sid && dateStr) {
+                const photo = loadPhoto(sid, dateStr);
+                const caption = loadCaption(sid, dateStr);
+                if (photo) {
+                    photoImg.src = photo;
+                    photoCaptionEl.textContent = caption ? `${caption.emoji}  ${caption.text}` : '';
+                    photoStrip.style.display = 'block';
+                } else {
+                    photoStrip.style.display = 'none';
+                }
+            } else {
+                photoStrip.style.display = 'none';
+            }
+
             document.getElementById('clockout-modal').style.display='flex';
         }
+
         function closeClockoutModal() { document.getElementById('clockout-modal').style.display='none'; pendingClockOut=null; }
+
         function confirmClockOut() {
             if (!pendingClockOut) return;
             const {sid}=pendingClockOut;
@@ -1117,7 +1470,7 @@
             pw.document.write(`<!DOCTYPE html><html><head><title>Payslip - ${staff.name}</title><style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:-apple-system,Arial,sans-serif;padding:40px;background:white;}.payslip{max-width:680px;margin:0 auto;border:2px solid #1a2332;border-radius:12px;overflow:hidden;}.header{background:#1a2332;color:white;padding:28px;text-align:center;}.header h1{font-size:24px;margin-bottom:6px;}.header p{opacity:.7;font-size:14px;}table{width:100%;border-collapse:collapse;}th{background:#f1f5f9;padding:12px;text-align:left;font-size:12px;color:#475569;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #e2e8f0;}td{padding:12px;border-bottom:1px solid #f1f5f9;font-size:14px;}.total{background:#1a2332;color:white;font-weight:bold;font-size:16px;}.sigs{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin:32px 28px;}.sig-box{text-align:center;}.sig-line{border-top:2px solid #e2e8f0;margin-top:48px;padding-top:10px;font-size:13px;color:#475569;}@media print{.no-print{display:none;}}</style></head>
             <body><div class="payslip"><div class="header"><h1>SIR RAMOS DRUGSTORE</h1><p>PAYSLIP — ${new Date(app.start).toLocaleDateString()} to ${new Date(app.end).toLocaleDateString()}</p></div>
             <table>
-                <tr><th>Employee</th><td colspan="2"><strong>${staff.name}</strong> (${staff.position})</td></tr>
+                <tr><th>Employee</th><td colspan="2"><strong>${staff.name}</strong></td></tr>
                 ${fd>0?`<tr><th>Full Days × Rate</th><td colspan="2">${fd} days × ₱${rt.daily} = ₱${rp}</td></tr>`:''}
                 ${ud>0?`<tr><th>Undertime Days</th><td colspan="2">${ud} days / ${ph.toFixed(2)} hrs worked × ₱${hr.toFixed(2)}/hr = ₱${pp}</td></tr>`:''}
                 ${oh>0?`<tr><th>Overtime</th><td colspan="2">${oh} hr × ₱${rt.ot}/hr = ₱${op}</td></tr>`:''}
@@ -1164,7 +1517,6 @@
         function renderDeductionsList() {
             if (app.deductions.length===0) return `<div class="card" style="text-align:center;color:var(--text-3);padding:40px;">No deductions recorded yet</div>`;
             const pending=app.deductions.filter(d=>d.status==='pending'), applied=app.deductions.filter(d=>d.status==='applied');
-            // Late deduction summary
             const lateByStaff={};
             pending.filter(d=>d.type==='late').forEach(d=>{
                 if(!lateByStaff[d.staffId]){lateByStaff[d.staffId]={count:0,total:0,staff:app.staff.find(s=>s.id===d.staffId)};}
@@ -1453,34 +1805,48 @@
                 <!-- Telegram -->
                 <div class="card">
                     <div class="section-title">📬 Telegram Notifications</div>
-                    <div class="form-group" style="margin-bottom:14px;">
-                        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
-                            <input type="checkbox" id="telegram-enabled" ${tg.enabled?'checked':''} onchange="toggleTelegramNotifications(this.checked)" style="width:20px;height:20px;flex-shrink:0;">
-                            <span>Enable Telegram Notifications</span>
+
+                    <!-- Enable toggle -->
+                    <div class="form-group" style="margin-bottom:16px;">
+                        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;">
+                            <input type="checkbox" id="telegram-enabled" ${tg.enabled?'checked':''}
+                                style="width:20px;height:20px;flex-shrink:0;accent-color:var(--blue);"
+                                onchange="toggleTelegramSection(this.checked)">
+                            <span style="font-size:14px;font-weight:600;color:var(--text-1);">Enable Telegram Notifications</span>
                         </label>
                     </div>
-                    <div id="telegram-config" style="${tg.enabled?'':'opacity:.5;pointer-events:none;'}">
-                        <div class="form-grid" style="margin-bottom:14px;">
+
+                    <!-- Config section -->
+                    <div id="telegram-config-section" style="transition:opacity .2s;${tg.enabled?'':'opacity:.45;pointer-events:none;'}">
+                        <div class="form-grid" style="margin-bottom:16px;">
                             <div class="form-group"><label>Bot Token</label><input type="text" id="telegram-token" value="${tg.botToken}" placeholder="123456789:ABC..." autocomplete="off" autocorrect="off"></div>
                             <div class="form-group"><label>Chat ID</label><input type="text" id="telegram-chatid" value="${tg.chatId}" placeholder="123456789" inputmode="numeric"></div>
                         </div>
-                                                <div style="display:grid;gap:8px;margin-bottom:14px;">
-                            <label style="display:flex;align-items:center;gap:10px;padding:12px;background:var(--surface-2);border-radius:var(--radius-sm);cursor:pointer;">
-                                <input type="checkbox" id="notif-clockin" ${tg.notifications.clockIn?'checked':''} style="width:20px;height:20px;flex-shrink:0;">
-                                <span>🟢 Clock In notifications</span>
-                            </label>
-                            <label style="display:flex;align-items:center;gap:10px;padding:12px;background:var(--surface-2);border-radius:var(--radius-sm);cursor:pointer;">
-                                <input type="checkbox" id="notif-clockout" ${tg.notifications.clockOut?'checked':''} style="width:20px;height:20px;flex-shrink:0;">
-                                <span>🔴 Clock Out notifications</span>
-                            </label>
-                            <label style="display:flex;align-items:center;gap:10px;padding:12px;background:var(--surface-2);border-radius:var(--radius-sm);cursor:pointer;">
-                                <input type="checkbox" id="notif-deduction" ${tg.notifications.newDeduction?'checked':''} style="width:20px;height:20px;flex-shrink:0;">
-                                <span>💸 New Deduction notifications</span>
-                            </label>
+
+                        <div style="margin-bottom:16px;">
+                            <div style="font-size:13px;font-weight:600;color:var(--text-2);margin-bottom:8px;">Notification Types</div>
+                            <div style="display:flex;flex-direction:column;gap:6px;">
+                                <label style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--surface-2);border-radius:var(--radius-sm);cursor:pointer;user-select:none;">
+                                    <input type="checkbox" id="notif-clockin" ${tg.notifications.clockIn?'checked':''}
+                                        style="width:20px;height:20px;flex-shrink:0;accent-color:var(--green);">
+                                    <span style="font-size:14px;">🟢 Clock In notifications</span>
+                                </label>
+                                <label style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--surface-2);border-radius:var(--radius-sm);cursor:pointer;user-select:none;">
+                                    <input type="checkbox" id="notif-clockout" ${tg.notifications.clockOut?'checked':''}
+                                        style="width:20px;height:20px;flex-shrink:0;accent-color:var(--red);">
+                                    <span style="font-size:14px;">🔴 Clock Out notifications</span>
+                                </label>
+                                <label style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--surface-2);border-radius:var(--radius-sm);cursor:pointer;user-select:none;">
+                                    <input type="checkbox" id="notif-deduction" ${tg.notifications.newDeduction?'checked':''}
+                                        style="width:20px;height:20px;flex-shrink:0;accent-color:var(--amber);">
+                                    <span style="font-size:14px;">💸 New Deduction notifications</span>
+                                </label>
+                            </div>
                         </div>
+
                         <div style="display:flex;gap:10px;flex-wrap:wrap;">
-                            <button class="btn-primary btn-sm" onclick="saveTelegramSettings()">💾 Save</button>
-                            <button class="btn-info btn-sm" onclick="testTelegramNotification()">📤 Test</button>
+                            <button class="btn-primary btn-sm" onclick="saveTelegramSettings()">💾 Save Settings</button>
+                            <button class="btn-info btn-sm" onclick="testTelegramNotification()">📤 Send Test</button>
                         </div>
                         <div id="telegram-msg" class="msg" style="display:none;margin-top:12px;"></div>
                     </div>
@@ -1488,6 +1854,14 @@
         }
 
         // Settings helpers
+        function toggleTelegramSection(enabled) {
+            const sec = document.getElementById('telegram-config-section');
+            if (sec) {
+                sec.style.opacity = enabled ? '1' : '0.45';
+                sec.style.pointerEvents = enabled ? '' : 'none';
+            }
+        }
+
         function saveClockoutMessage() {
             const raw=document.getElementById('clockout-checklist-input').value, fare=document.getElementById('clockout-farewell-input').value.trim();
             const items=raw.split('\n').map(l=>l.trim()).filter(l=>l.length>0);
@@ -1501,6 +1875,7 @@
             const items=raw.split('\n').map(l=>l.trim()).filter(l=>l.length>0);
             document.getElementById('clockout-checklist-display').innerHTML=items.map(i=>`<li><span class="check-icon">☑️</span><span>${i}</span></li>`).join('');
             document.getElementById('clockout-farewell-display').textContent=fare||DEFAULT_CLOCKOUT_FAREWELL;
+            document.getElementById('clockout-photo-strip').style.display='none';
             document.getElementById('clockout-modal').style.display='flex';
         }
         function resetClockoutMessage() {
@@ -1529,13 +1904,38 @@
             showMsg('password-msg','✅ Password changed!','ok');
             setTimeout(()=>{alert('Password changed! You will be logged out.');app.adminMode=false;app.view='clock';render();},2000);
         }
-        function toggleTelegramNotifications(en) { const c=document.getElementById('telegram-config'); c.style.opacity=en?'1':'0.5'; c.style.pointerEvents=en?'auto':'none'; }
+
+        // ─── FIXED saveTelegramSettings ──────────────────────────
         function saveTelegramSettings() {
-            const en=document.getElementById('telegram-enabled').checked, bt=document.getElementById('telegram-token').value.trim(), ci=document.getElementById('telegram-chatid').value.trim();
-            if(en&&(!bt||!ci)) return showMsg('telegram-msg','❌ Enter Bot Token and Chat ID','err');
-            app.settings.telegram={enabled:en,botToken:bt,chatId:ci,notifications:{clockIn:document.getElementById('notif-clockin')?.checked||true,clockOut:document.getElementById('notif-clockout')?.checked||true,newDeduction:document.getElementById('notif-deduction')?.checked||true,payrollGenerated:false}};
-            saveData(); showMsg('telegram-msg','✅ Saved!','ok');
+            const enabledEl  = document.getElementById('telegram-enabled');
+            const tokenEl    = document.getElementById('telegram-token');
+            const chatIdEl   = document.getElementById('telegram-chatid');
+            const clockInEl  = document.getElementById('notif-clockin');
+            const clockOutEl = document.getElementById('notif-clockout');
+            const deductEl   = document.getElementById('notif-deduction');
+
+            const en = enabledEl  ? enabledEl.checked  : false;
+            const bt = tokenEl    ? tokenEl.value.trim()  : '';
+            const ci = chatIdEl   ? chatIdEl.value.trim() : '';
+
+            if (en && (!bt || !ci)) return showMsg('telegram-msg','❌ Enter Bot Token and Chat ID','err');
+
+            app.settings.telegram = {
+                enabled: en,
+                botToken: bt,
+                chatId: ci,
+                notifications: {
+                    clockIn:       clockInEl  ? clockInEl.checked  : app.settings.telegram.notifications.clockIn,
+                    clockOut:      clockOutEl ? clockOutEl.checked : app.settings.telegram.notifications.clockOut,
+                    newDeduction:  deductEl   ? deductEl.checked   : app.settings.telegram.notifications.newDeduction,
+                    payrollGenerated: false
+                }
+            };
+
+            saveData();
+            showMsg('telegram-msg','✅ Telegram settings saved!','ok');
         }
+
         async function sendTelegramNotification(msg) {
             if(!app.settings.telegram.enabled)return;
             const{botToken,chatId}=app.settings.telegram;if(!botToken||!chatId)return;

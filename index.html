@@ -1176,7 +1176,7 @@
                     </div>
                     <div id="clock-msg" class="msg" style="display:none;"></div>
                 </div>
-               <!--- ${!app.adminMode ? `<div style="text-align:center;margin-top:8px;"><button class="btn-muted btn-sm" onclick="showAdminLogin()">🔐 Admin Mode</button></div>` : `<div style="text-align:center;margin-top:8px;"><button class="btn-danger btn-sm" onclick="exitAdminMode()">🚪 Exit Admin Mode</button></div>`} --->
+               ${!app.adminMode ? `<div style="text-align:center;margin-top:8px;"><button class="btn-muted btn-sm" onclick="showAdminLogin()">🔐 Admin Mode</button></div>` : `<div style="text-align:center;margin-top:8px;"><button class="btn-danger btn-sm" onclick="exitAdminMode()">🚪 Exit Admin Mode</button></div>`}
                 ${renderTodayCards()}
             `;
         }
